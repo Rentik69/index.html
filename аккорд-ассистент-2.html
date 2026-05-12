@@ -1,0 +1,809 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#08080f">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Ассистент">
+<title>Ассистент</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@300;600;900&family=Martian+Mono:wght@300;400&display=swap" rel="stylesheet">
+<style>
+:root {
+  --c1: #7b2fff;
+  --c2: #00e5ff;
+  --c3: #2fff7b;
+  --bg: #08080f;
+  --s1: #0e0e1a;
+  --s2: #161625;
+  --border: rgba(255,255,255,0.06);
+  --text: #dde0f0;
+  --muted: #4a4a6a;
+  --speed: 6s;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+html, body { height: 100%; width: 100%; background: var(--bg); color: var(--text); font-family: 'Martian Mono', monospace; overflow: hidden; position: fixed; }
+
+/* ═══ ЖИВОЙ ФОН ═══ */
+#canvas-bg {
+  position: fixed; inset: 0; z-index: 0;
+  pointer-events: none;
+}
+
+/* ═══ ПЛАВАЮЩИЕ ШАРЫ ═══ */
+.blob {
+  position: fixed; border-radius: 50%;
+  filter: blur(70px); pointer-events: none; z-index: 0;
+  mix-blend-mode: screen;
+  transition: background 3s ease, opacity 3s ease;
+}
+.b1 {
+  width: 350px; height: 350px; opacity: 0.12;
+  top: -100px; right: -80px;
+  background: radial-gradient(circle, var(--c1), transparent);
+  animation: float1 var(--speed) ease-in-out infinite alternate;
+}
+.b2 {
+  width: 280px; height: 280px; opacity: 0.10;
+  bottom: 80px; left: -80px;
+  background: radial-gradient(circle, var(--c2), transparent);
+  animation: float2 calc(var(--speed) * 1.3) ease-in-out infinite alternate;
+}
+.b3 {
+  width: 200px; height: 200px; opacity: 0.08;
+  top: 40%; left: 30%;
+  background: radial-gradient(circle, var(--c3), transparent);
+  animation: float3 calc(var(--speed) * 0.8) ease-in-out infinite alternate;
+}
+
+@keyframes float1 {
+  0%   { transform: translate(0,0) scale(1); }
+  33%  { transform: translate(-30px, 40px) scale(1.1); }
+  66%  { transform: translate(20px, -20px) scale(0.95); }
+  100% { transform: translate(40px, 30px) scale(1.05); }
+}
+@keyframes float2 {
+  0%   { transform: translate(0,0) scale(1); }
+  40%  { transform: translate(40px,-30px) scale(1.15); }
+  100% { transform: translate(-20px, 50px) scale(0.9); }
+}
+@keyframes float3 {
+  0%   { transform: translate(0,0) scale(1) rotate(0deg); }
+  50%  { transform: translate(-40px, 30px) scale(1.2) rotate(20deg); }
+  100% { transform: translate(50px, -40px) scale(0.85) rotate(-10deg); }
+}
+
+/* ═══ ПУЛЬС НАСТРОЕНИЯ ═══ */
+#mood-ring {
+  position: fixed; top: 50%; left: 50%;
+  width: 600px; height: 600px;
+  transform: translate(-50%, -50%);
+  border-radius: 50%; z-index: 0;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 2s ease, background 3s ease;
+  filter: blur(120px);
+  animation: pulse-ring 4s ease-in-out infinite;
+}
+@keyframes pulse-ring {
+  0%,100% { transform: translate(-50%,-50%) scale(0.9); opacity: 0; }
+  50%      { transform: translate(-50%,-50%) scale(1.1); opacity: 0.06; }
+}
+
+/* ═══ ИНДИКАТОР НАСТРОЕНИЯ ═══ */
+#mood-bar {
+  position: fixed; top: 0; left: 0; right: 0; height: 2px;
+  background: linear-gradient(90deg, var(--c1), var(--c2), var(--c3));
+  z-index: 50; transition: all 3s ease;
+  animation: shimmer 3s ease-in-out infinite;
+}
+@keyframes shimmer {
+  0%   { background-position: 0% 50%; }
+  50%  { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+/* ═══ ПРИЛОЖЕНИЕ ═══ */
+#app { display: flex; flex-direction: column; height: 100%; position: relative; z-index: 1; max-width: 500px; margin: 0 auto; }
+
+/* ═══ ШАПКА ═══ */
+header {
+  padding: 18px 18px 14px;
+  border-bottom: 1px solid var(--border);
+  background: rgba(8,8,15,0.7);
+  backdrop-filter: blur(30px);
+  display: flex; align-items: center; gap: 12px;
+  flex-shrink: 0;
+}
+
+/* Аватар с пульсом */
+.avatar {
+  width: 40px; height: 40px; border-radius: 14px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 20px; flex-shrink: 0; position: relative;
+  background: linear-gradient(135deg, var(--c1), var(--c2));
+  transition: background 3s ease;
+  box-shadow: 0 0 20px rgba(123,47,255,0.4);
+  animation: avatar-pulse 3s ease-in-out infinite;
+}
+@keyframes avatar-pulse {
+  0%,100% { box-shadow: 0 0 15px rgba(123,47,255,0.3); }
+  50%      { box-shadow: 0 0 35px rgba(0,229,255,0.5); }
+}
+.avatar::after {
+  content: '';
+  position: absolute; inset: -3px; border-radius: 17px;
+  background: linear-gradient(135deg, var(--c1), var(--c2), var(--c3));
+  z-index: -1; opacity: 0.4; animation: border-spin 4s linear infinite;
+  transition: all 3s ease;
+}
+@keyframes border-spin { to { filter: hue-rotate(360deg); } }
+
+.header-info { flex: 1; }
+.header-info h1 { font-family: 'Unbounded', sans-serif; font-size: 13px; font-weight: 900; letter-spacing: 0.06em; }
+#mood-label { font-size: 10px; margin-top: 2px; transition: color 2s ease; }
+
+.model-btn {
+  font-size: 9px; color: var(--c2); border: 1px solid rgba(0,229,255,0.2);
+  background: rgba(0,229,255,0.05); border-radius: 8px; padding: 5px 9px;
+  cursor: pointer; transition: all 0.2s; font-family: 'Martian Mono', monospace;
+  letter-spacing: 0.05em;
+}
+.model-btn:active { background: rgba(0,229,255,0.15); }
+
+/* ═══ СООБЩЕНИЯ ═══ */
+#messages {
+  flex: 1; overflow-y: auto; padding: 16px 14px;
+  display: flex; flex-direction: column; gap: 14px;
+  scroll-behavior: smooth; -webkit-overflow-scrolling: touch;
+}
+#messages::-webkit-scrollbar { width: 2px; }
+#messages::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+/* ═══ ПРИВЕТСТВИЕ ═══ */
+.welcome {
+  display: flex; flex-direction: column; align-items: center;
+  justify-content: center; height: 100%; gap: 18px; text-align: center;
+  animation: fadeUp 0.6s ease;
+}
+@keyframes fadeUp { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
+
+.w-orb {
+  width: 90px; height: 90px; border-radius: 50%;
+  background: conic-gradient(var(--c1), var(--c2), var(--c3), var(--c1));
+  display: flex; align-items: center; justify-content: center;
+  font-size: 40px; position: relative;
+  animation: orb-spin 8s linear infinite, orb-float 3s ease-in-out infinite;
+  filter: drop-shadow(0 0 30px var(--c1));
+  transition: filter 3s ease;
+}
+@keyframes orb-spin { to { filter: hue-rotate(360deg) drop-shadow(0 0 30px var(--c1)); } }
+@keyframes orb-float { 0%,100% { transform: translateY(0) scale(1); } 50% { transform: translateY(-12px) scale(1.05); } }
+
+.w-orb::before {
+  content: ''; position: absolute; inset: -8px; border-radius: 50%;
+  background: conic-gradient(transparent 60%, var(--c2), transparent);
+  animation: ring-spin 3s linear infinite;
+  opacity: 0.6;
+}
+@keyframes ring-spin { to { transform: rotate(360deg); } }
+
+.w-title { font-family: 'Unbounded', sans-serif; font-size: 19px; font-weight: 900; line-height: 1.3; }
+.w-title .grad { background: linear-gradient(90deg, var(--c1), var(--c2), var(--c3)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; animation: grad-shift 4s ease-in-out infinite; background-size: 200%; }
+@keyframes grad-shift { 0%,100% { background-position: 0%; } 50% { background-position: 100%; } }
+
+.w-sub { font-size: 11px; color: var(--muted); line-height: 1.8; max-width: 260px; }
+
+.chips { display: flex; flex-direction: column; gap: 7px; width: 100%; max-width: 300px; }
+.chip {
+  background: rgba(255,255,255,0.03); border: 1px solid var(--border);
+  border-radius: 12px; padding: 10px 13px; font-size: 11px;
+  color: var(--muted); cursor: pointer; transition: all 0.2s;
+  display: flex; align-items: center; gap: 9px; text-align: left;
+  font-family: 'Martian Mono', monospace;
+}
+.chip:active { background: rgba(255,255,255,0.07); color: var(--text); border-color: var(--c2); }
+
+/* ═══ ПУЗЫРИ ═══ */
+.msg { display: flex; flex-direction: column; gap: 3px; max-width: 88%; animation: fadeUp 0.25s ease; }
+.msg.user { align-self: flex-end; align-items: flex-end; }
+.msg.ai   { align-self: flex-start; align-items: flex-start; }
+.msg-who { font-size: 9px; color: var(--muted); letter-spacing: 0.1em; text-transform: uppercase; padding: 0 4px; }
+
+.bubble {
+  padding: 11px 15px; border-radius: 16px;
+  font-size: 13px; line-height: 1.7; word-break: break-word;
+  transition: background 2s ease, border-color 2s ease;
+}
+.msg.user .bubble {
+  background: linear-gradient(135deg, rgba(123,47,255,0.2), rgba(0,229,255,0.08));
+  border: 1px solid rgba(123,47,255,0.2);
+  border-bottom-right-radius: 4px;
+  transition: background 2s ease, border-color 2s ease;
+}
+.msg.ai .bubble {
+  background: rgba(255,255,255,0.04);
+  border: 1px solid var(--border);
+  border-bottom-left-radius: 4px;
+}
+
+/* Анимация ввода */
+.typing-wrap { display: flex; gap: 5px; padding: 13px 16px; background: rgba(255,255,255,0.04); border: 1px solid var(--border); border-radius: 16px; border-bottom-left-radius: 4px; align-items: center; }
+.typing-wrap span { width: 7px; height: 7px; border-radius: 50%; opacity: 0.4; animation: blink 1.4s ease-in-out infinite; }
+.typing-wrap span:nth-child(1) { background: var(--c1); }
+.typing-wrap span:nth-child(2) { background: var(--c2); animation-delay: 0.2s; }
+.typing-wrap span:nth-child(3) { background: var(--c3); animation-delay: 0.4s; }
+@keyframes blink { 0%,80%,100% { opacity: 0.3; transform: scale(1); } 40% { opacity: 1; transform: scale(1.5); } }
+
+/* ═══ ВВОД ═══ */
+#input-area {
+  padding: 10px 14px 20px; flex-shrink: 0;
+  background: rgba(8,8,15,0.8); backdrop-filter: blur(30px);
+  border-top: 1px solid var(--border);
+}
+#voice-bar {
+  display: none; margin-bottom: 8px;
+  background: rgba(255,47,170,0.07); border: 1px solid rgba(255,47,170,0.2);
+  border-radius: 10px; padding: 8px 12px; font-size: 11px; color: #ff7ccc;
+  animation: voice-pulse 1s ease-in-out infinite;
+}
+@keyframes voice-pulse { 0%,100% { border-color: rgba(255,47,170,0.2); } 50% { border-color: rgba(255,47,170,0.5); } }
+#voice-bar.on { display: block; }
+
+.input-row { display: flex; align-items: flex-end; gap: 8px; }
+
+#txt {
+  flex: 1; background: rgba(255,255,255,0.04); border: 1px solid var(--border);
+  border-radius: 14px; padding: 12px 14px; color: var(--text);
+  font-family: 'Martian Mono', monospace; font-size: 13px;
+  resize: none; outline: none; max-height: 110px; min-height: 46px;
+  transition: border-color 0.3s; -webkit-appearance: none; line-height: 1.5;
+}
+#txt:focus { border-color: rgba(123,47,255,0.35); }
+#txt::placeholder { color: var(--muted); }
+
+.btn {
+  width: 46px; height: 46px; border-radius: 13px; border: none;
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+  font-size: 18px; flex-shrink: 0; transition: all 0.15s;
+}
+#mic {
+  background: rgba(255,255,255,0.04); border: 1px solid var(--border); color: var(--muted);
+}
+#mic.on {
+  background: linear-gradient(135deg, #ff2faa, #ff6060);
+  border: none; color: white;
+  animation: mic-pulse 0.8s ease-in-out infinite;
+}
+@keyframes mic-pulse {
+  0%,100% { box-shadow: 0 0 20px rgba(255,47,170,0.4); transform: scale(1); }
+  50%      { box-shadow: 0 0 40px rgba(255,47,170,0.7); transform: scale(1.05); }
+}
+
+#send {
+  background: linear-gradient(135deg, var(--c1), var(--c2));
+  color: white; transition: background 3s ease, box-shadow 3s ease;
+  box-shadow: 0 4px 20px rgba(123,47,255,0.3);
+}
+#send:active { transform: scale(0.88); }
+#send:disabled { opacity: 0.2; }
+
+#status { font-size: 10px; color: var(--muted); text-align: center; margin-top: 7px; min-height: 14px; letter-spacing: 0.05em; }
+
+/* ═══ МОДАЛКИ ═══ */
+.overlay {
+  position: fixed; inset: 0; z-index: 100;
+  background: rgba(4,4,12,0.96); backdrop-filter: blur(20px);
+  display: flex; align-items: center; justify-content: center; padding: 20px;
+}
+.card {
+  background: var(--s1); border: 1px solid var(--border);
+  border-radius: 22px; padding: 28px 22px;
+  max-width: 340px; width: 100%; animation: fadeUp 0.35s ease;
+}
+.card-icon { font-size: 44px; text-align: center; margin-bottom: 16px; }
+.card h2 { font-family: 'Unbounded', sans-serif; font-size: 16px; font-weight: 900; margin-bottom: 8px; background: linear-gradient(90deg, var(--c1), var(--c2)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+.card p { font-size: 11px; color: var(--muted); line-height: 1.7; margin-bottom: 18px; }
+.card input {
+  width: 100%; background: var(--s2); border: 1px solid var(--border);
+  border-radius: 12px; padding: 13px 15px; color: var(--text);
+  font-family: 'Martian Mono', monospace; font-size: 12px;
+  outline: none; margin-bottom: 12px; -webkit-appearance: none;
+}
+.card input:focus { border-color: rgba(0,229,255,0.3); }
+.card-btn {
+  width: 100%; padding: 14px;
+  background: linear-gradient(135deg, var(--c1), var(--c2));
+  border: none; border-radius: 12px; color: white;
+  font-family: 'Unbounded', sans-serif; font-weight: 700;
+  font-size: 13px; cursor: pointer; letter-spacing: 0.06em;
+}
+.card-btn:active { opacity: 0.8; }
+.card-note { margin-top: 12px; font-size: 10px; color: var(--muted); text-align: center; }
+.card-note a { color: var(--c2); text-decoration: none; }
+
+/* Выбор модели */
+#model-sheet {
+  position: fixed; inset: 0; z-index: 100;
+  background: rgba(4,4,12,0.96); backdrop-filter: blur(20px);
+  display: none; align-items: flex-end; justify-content: center;
+}
+#model-sheet.open { display: flex; }
+.sheet-box {
+  background: var(--s1); border: 1px solid var(--border);
+  border-radius: 22px 22px 0 0; padding: 22px 18px 30px;
+  width: 100%; max-width: 500px; animation: slideUp 0.3s ease;
+}
+@keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+.sheet-box h3 { font-family: 'Unbounded', sans-serif; font-size: 11px; font-weight: 600; margin-bottom: 14px; color: var(--muted); letter-spacing: 0.1em; }
+.m-opt {
+  padding: 13px 15px; border-radius: 12px; cursor: pointer;
+  transition: all 0.15s; margin-bottom: 6px;
+  display: flex; align-items: center; gap: 12px;
+}
+.m-opt:active { background: var(--s2); }
+.m-opt.sel { background: rgba(0,229,255,0.06); border: 1px solid rgba(0,229,255,0.2); }
+.m-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--muted); flex-shrink: 0; transition: all 0.3s; }
+.m-opt.sel .m-dot { background: var(--c2); box-shadow: 0 0 10px var(--c2); }
+.m-name { font-size: 13px; color: var(--text); }
+.m-desc { font-size: 10px; color: var(--muted); margin-top: 2px; }
+</style>
+</head>
+<body>
+
+<!-- Живые фоновые шары -->
+<div class="blob b1"></div>
+<div class="blob b2"></div>
+<div class="blob b3"></div>
+<div id="mood-ring"></div>
+<div id="mood-bar"></div>
+
+<!-- Модалка: API ключ -->
+<div class="overlay" id="key-modal">
+  <div class="card">
+    <div class="card-icon">⚡</div>
+    <h2>GROQ АССИСТЕНТ</h2>
+    <p>Вставь свой Groq API ключ. Он хранится только в браузере — никуда не отправляется кроме Groq.</p>
+    <input type="password" id="key-input" placeholder="gsk_..." autocomplete="off" spellcheck="false">
+    <button class="card-btn" onclick="saveKey()">ВОЙТИ →</button>
+    <p class="card-note">Получить бесплатно: <a href="https://console.groq.com" target="_blank">console.groq.com</a></p>
+  </div>
+</div>
+
+<!-- Выбор модели -->
+<div id="model-sheet" onclick="if(event.target===this)this.classList.remove('open')">
+  <div class="sheet-box">
+    <h3>ВЫБЕРИ МОДЕЛЬ</h3>
+    <div class="m-opt sel" data-model="llama-3.3-70b-versatile">
+      <div class="m-dot"></div>
+      <div><div class="m-name">Llama 3.3 70B</div><div class="m-desc">Лучшее качество · Рекомендую</div></div>
+    </div>
+    <div class="m-opt" data-model="llama-3.1-8b-instant">
+      <div class="m-dot"></div>
+      <div><div class="m-name">Llama 3.1 8B Мгновенный</div><div class="m-desc">Молниеносно быстрый</div></div>
+    </div>
+    <div class="m-opt" data-model="mixtral-8x7b-32768">
+      <div class="m-dot"></div>
+      <div><div class="m-name">Mixtral 8x7B</div><div class="m-desc">Длинный контекст · 32K токенов</div></div>
+    </div>
+    <div class="m-opt" data-model="gemma2-9b-it">
+      <div class="m-dot"></div>
+      <div><div class="m-name">Gemma 2 9B</div><div class="m-desc">От Google · Быстрый и умный</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- Приложение -->
+<div id="app">
+  <header>
+    <div class="avatar">🤖</div>
+    <div class="header-info">
+      <h1>АССИСТЕНТ</h1>
+      <div id="mood-label" style="color:var(--muted)">Определяю настроение...</div>
+    </div>
+    <div class="model-btn" id="model-label" onclick="document.getElementById('model-sheet').classList.add('open')">Llama 3.3</div>
+    <div class="model-btn" onclick="if(confirm('Забыть API ключ?'))forgetKey()" style="margin-left:4px;color:var(--muted)">🔑</div>
+  </header>
+
+  <div id="messages">
+    <div class="welcome" id="welcome">
+      <div class="w-orb">🧠</div>
+      <div class="w-title"><span class="grad">Привет, Роман!</span></div>
+      <p class="w-sub">Я чувствую твоё настроение и меняю цвета под него. Говори или пиши!</p>
+      <div class="chips">
+        <div class="chip" onclick="useChip(this)">💡 Объясни квантовые компьютеры просто</div>
+        <div class="chip" onclick="useChip(this)">😄 Расскажи смешной анекдот</div>
+        <div class="chip" onclick="useChip(this)">🎵 Посоветуй музыку для работы</div>
+        <div class="chip" onclick="useChip(this)">📝 Помоги написать сообщение</div>
+      </div>
+    </div>
+  </div>
+
+  <div id="input-area">
+    <div id="voice-bar"></div>
+    <div class="input-row">
+      <button class="btn" id="mic" onclick="toggleMic()">🎙️</button>
+      <textarea id="txt" placeholder="Напиши или нажми 🎙️..." rows="1"
+        onkeydown="onKey(event)" oninput="resize(this)"></textarea>
+      <button class="btn" id="send" onclick="send()">↑</button>
+    </div>
+    <div id="status"></div>
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════════════
+// НАСТРОЕНИЯ И ЦВЕТА
+// ══════════════════════════════════════
+const MOODS = {
+  радость: {
+    c1: '#ffcc00', c2: '#ff8c00', c3: '#ff4500',
+    label: '😄 Радостное настроение', speed: '4s',
+    ring: 'rgba(255,200,0,0.15)'
+  },
+  грусть: {
+    c1: '#4488ff', c2: '#2255cc', c3: '#8888ff',
+    label: '😔 Задумчивое настроение', speed: '10s',
+    ring: 'rgba(68,136,255,0.1)'
+  },
+  злость: {
+    c1: '#ff2222', c2: '#ff6600', c3: '#ff0066',
+    label: '😤 Напряжённое настроение', speed: '3s',
+    ring: 'rgba(255,34,34,0.15)'
+  },
+  спокойствие: {
+    c1: '#00e5b0', c2: '#0077ff', c3: '#00ccff',
+    label: '😌 Спокойное настроение', speed: '8s',
+    ring: 'rgba(0,229,176,0.1)'
+  },
+  любопытство: {
+    c1: '#aa00ff', c2: '#00e5ff', c3: '#ff00aa',
+    label: '🤔 Любопытное настроение', speed: '5s',
+    ring: 'rgba(170,0,255,0.12)'
+  },
+  романтика: {
+    c1: '#ff69b4', c2: '#ff1493', c3: '#ff8c69',
+    label: '💕 Романтичное настроение', speed: '7s',
+    ring: 'rgba(255,105,180,0.12)'
+  },
+  страх: {
+    c1: '#660066', c2: '#330033', c3: '#9900cc',
+    label: '😨 Тревожное настроение', speed: '2.5s',
+    ring: 'rgba(102,0,102,0.15)'
+  },
+  нейтраль: {
+    c1: '#7b2fff', c2: '#00e5ff', c3: '#2fff7b',
+    label: '🌀 Нейтральное настроение', speed: '6s',
+    ring: 'rgba(123,47,255,0.1)'
+  }
+};
+
+// Ключевые слова для определения настроения
+const MOOD_KEYS = {
+  радость:    ['смешн', 'смеяться', 'весело', 'круто', 'отлично', 'прекрасно', 'счастли', 'радост', 'ура', 'супер', 'класс', 'хорошо', '😄', '😂', '🎉', 'анекдот', 'шутк'],
+  грусть:     ['грустно', 'плохо', 'устал', 'тяжело', 'скучно', 'одиноко', 'печаль', 'горе', 'слёзы', 'плачу', '😢', '😞', 'не могу', 'устала'],
+  злость:     ['злюсь', 'бесит', 'раздража', 'злой', 'достало', 'надоело', 'ненавижу', 'злит', 'бесится', '😤', '😡', 'ужасно', 'отстой'],
+  спокойствие:['спокойно', 'тихо', 'релакс', 'медитац', 'отдых', 'мир', 'уютно', 'музык', 'природ', 'чай', 'книга', '😌', '🌿'],
+  любопытство:['почему', 'как', 'что такое', 'объясни', 'расскажи', 'интересно', 'узнать', 'понять', 'зачем', 'когда', 'где', '🤔', 'помоги'],
+  романтика:  ['любовь', 'люблю', 'романтик', 'свидани', 'сердце', 'красивый', 'нравится', '💕', '❤️', 'поцелуй', 'цветы'],
+  страх:      ['боюсь', 'страшно', 'тревога', 'беспокой', 'нервни', 'паника', 'ужас', 'опасно', '😨', '😰', 'помогите']
+};
+
+let currentMood = 'нейтраль';
+
+function detectMood(text) {
+  const lower = text.toLowerCase();
+  let best = 'нейтраль'; let bestScore = 0;
+  for (const [mood, keys] of Object.entries(MOOD_KEYS)) {
+    const score = keys.filter(k => lower.includes(k)).length;
+    if (score > bestScore) { bestScore = score; best = mood; }
+  }
+  return best;
+}
+
+function applyMood(mood) {
+  if (mood === currentMood) return;
+  currentMood = mood;
+  const m = MOODS[mood];
+
+  // Обновляем CSS переменные
+  document.documentElement.style.setProperty('--c1', m.c1);
+  document.documentElement.style.setProperty('--c2', m.c2);
+  document.documentElement.style.setProperty('--c3', m.c3);
+  document.documentElement.style.setProperty('--speed', m.speed);
+
+  // Обновляем кольцо настроения
+  const ring = document.getElementById('mood-ring');
+  ring.style.background = `radial-gradient(circle, ${m.ring}, transparent)`;
+
+  // Метка настроения
+  document.getElementById('mood-label').textContent = m.label;
+
+  // Шары меняют цвет
+  document.querySelector('.b1').style.background = `radial-gradient(circle, ${m.c1}, transparent)`;
+  document.querySelector('.b2').style.background = `radial-gradient(circle, ${m.c2}, transparent)`;
+  document.querySelector('.b3').style.background = `radial-gradient(circle, ${m.c3}, transparent)`;
+
+  // Кнопка отправки
+  document.getElementById('send').style.background = `linear-gradient(135deg, ${m.c1}, ${m.c2})`;
+
+  setStatus(`Настроение: ${m.label}`);
+  setTimeout(() => setStatus(''), 3000);
+}
+
+// ══════════════════════════════════════
+// API КЛЮЧ
+// ══════════════════════════════════════
+let apiKey = '';
+let model = 'llama-3.3-70b-versatile';
+let history = [];
+let busy = false;
+let rec = null;
+let listening = false;
+let finalText = '';
+
+function saveKey() {
+  const v = document.getElementById('key-input').value.trim();
+  if (!v.startsWith('gsk_')) {
+    document.getElementById('key-input').style.borderColor = '#ff3355';
+    setStatus('Ключ должен начинаться с gsk_');
+    return;
+  }
+  apiKey = v;
+  try { localStorage.setItem('akkord_gk', v); } catch(e) {}
+  document.getElementById('key-modal').style.display = 'none';
+  setStatus('✓ Ключ сохранён навсегда');
+  setTimeout(() => setStatus(''), 2000);
+}
+
+function forgetKey() {
+  localStorage.removeItem('akkord_gk');
+  apiKey = '';
+  document.getElementById('key-modal').style.display = 'flex';
+}
+
+document.getElementById('key-input').addEventListener('keydown', e => { if (e.key === 'Enter') saveKey(); });
+
+// Загружаем сохранённый ключ из localStorage
+try {
+  const sk = localStorage.getItem('akkord_gk');
+  if (sk && sk.startsWith('gsk_')) {
+    apiKey = sk;
+    document.getElementById('key-modal').style.display = 'none';
+  }
+} catch(e) {}
+
+// ══════════════════════════════════════
+// ВЫБОР МОДЕЛИ
+// ══════════════════════════════════════
+document.querySelectorAll('.m-opt').forEach(el => {
+  el.addEventListener('click', () => {
+    model = el.dataset.model;
+    document.querySelectorAll('.m-opt').forEach(o => o.classList.remove('sel'));
+    el.classList.add('sel');
+    document.getElementById('model-label').textContent = el.querySelector('.m-name').textContent.split(' ').slice(0,2).join(' ');
+    document.getElementById('model-sheet').classList.remove('open');
+  });
+});
+
+// ══════════════════════════════════════
+// ГОЛОС
+// ══════════════════════════════════════
+function initRec() {
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SR) return null;
+  const r = new SR();
+  r.lang = 'ru-RU';
+  r.continuous = false;      // На мобильных continuous плохо работает
+  r.interimResults = true;
+  r.maxAlternatives = 1;
+  const bar = document.getElementById('voice-bar');
+
+  r.onstart = () => {
+    listening = true;
+    document.getElementById('mic').classList.add('on');
+    document.getElementById('mic').textContent = '⏹️';
+    bar.classList.add('on'); bar.textContent = '● Слушаю вас...';
+    setStatus('Говорите по-русски...');
+  };
+  r.onresult = e => {
+    let interim = ''; finalText = '';
+    for (let i = e.resultIndex; i < e.results.length; i++) {
+      if (e.results[i].isFinal) finalText += e.results[i][0].transcript;
+      else interim += e.results[i][0].transcript;
+    }
+    bar.textContent = '● ' + (finalText || interim || 'Слушаю вас...');
+    if (interim) applyMood(detectMood(interim));
+  };
+  r.onerror = e => {
+    console.error('Mic error:', e.error);
+    if (e.error === 'not-allowed') {
+      setStatus('⚠️ Разрешите доступ к микрофону в настройках браузера');
+    } else if (e.error === 'no-speech') {
+      setStatus('Речь не распознана — попробуйте ещё раз');
+    } else {
+      setStatus('Ошибка микрофона: ' + e.error);
+    }
+    stopMic(true);
+  };
+  r.onend = () => {
+    if (listening) {
+      if (finalText.trim()) {
+        document.getElementById('txt').value = finalText.trim();
+        resize(document.getElementById('txt'));
+        setTimeout(() => bar.classList.remove('on'), 600);
+        send();
+      } else {
+        bar.classList.remove('on');
+        setStatus('');
+      }
+      stopMic(false);
+    }
+  };
+  return r;
+}
+
+async function toggleMic() {
+  if (listening) {
+    if (rec) rec.stop();
+    stopMic(true);
+    return;
+  }
+
+  // Запрашиваем разрешение на микрофон явно
+  try {
+    await navigator.mediaDevices.getUserMedia({ audio: true });
+  } catch(e) {
+    setStatus('⚠️ Нет доступа к микрофону — разрешите в браузере');
+    return;
+  }
+
+  if (!rec) {
+    rec = initRec();
+    if (!rec) { setStatus('Голосовой ввод не поддерживается в этом браузере'); return; }
+  }
+
+  finalText = '';
+  try {
+    rec.start();
+  } catch(e) {
+    // Если уже запущен — пересоздаём
+    rec = initRec();
+    try { rec.start(); } catch(e2) { setStatus('Не удалось запустить микрофон'); }
+  }
+}
+function stopMic(manual = true) {
+  listening = false;
+  document.getElementById('mic').classList.remove('on');
+  document.getElementById('mic').textContent = '🎙️';
+  if (manual) { document.getElementById('voice-bar').classList.remove('on'); setStatus(''); }
+}
+
+// ══════════════════════════════════════
+// ЧАТ
+// ══════════════════════════════════════
+function useChip(el) {
+  document.getElementById('txt').value = el.textContent.replace(/^[^\s]+\s/, '').trim();
+  send();
+}
+function onKey(e) { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); } }
+function resize(el) { el.style.height = 'auto'; el.style.height = Math.min(el.scrollHeight, 110) + 'px'; }
+
+async function send() {
+  const inp = document.getElementById('txt');
+  const text = inp.value.trim();
+  if (!text || busy) return;
+
+  // Убираем приветствие
+  const w = document.getElementById('welcome');
+  if (w) w.remove();
+
+  // Определяем настроение по тексту пользователя
+  applyMood(detectMood(text));
+
+  inp.value = ''; resize(inp);
+  addMsg('user', text);
+  history.push({ role: 'user', content: text });
+
+  busy = true;
+  document.getElementById('send').disabled = true;
+  setStatus('Думаю...');
+  const t = addTyping();
+
+  try {
+    const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + apiKey
+      },
+      body: JSON.stringify({
+        model,
+        max_tokens: 1024,
+        messages: [
+          {
+            role: 'system',
+            content: `Ты умный, дружелюбный и эмпатичный карманный ассистент по имени Аккорд. 
+Ты всегда отвечаешь на русском языке. 
+Ты умеешь чувствовать настроение собеседника и адаптируешь свой тон: 
+- Если человек радостный — будь весёлым и энергичным
+- Если грустный — будь мягким и поддерживающим  
+- Если злится — будь спокойным и понимающим
+- Если любопытный — будь подробным и увлечённым
+Будь кратким, точным и живым. Используй эмодзи умеренно.`
+          },
+          ...history
+        ]
+      })
+    });
+
+    t.remove();
+
+    if (!res.ok) {
+      const err = await res.json();
+      throw new Error(err.error?.message || 'Ошибка API');
+    }
+
+    const data = await res.json();
+    const reply = data.choices[0].message.content;
+    history.push({ role: 'assistant', content: reply });
+
+    // Настроение по ответу ассистента тоже учитываем
+    applyMood(detectMood(text + ' ' + reply));
+
+    addMsg('ai', reply);
+    setStatus('');
+
+  } catch(e) {
+    t.remove();
+    addMsg('ai', '⚠️ ' + e.message);
+    setStatus('Проверь API ключ');
+    applyMood('нейтраль');
+  }
+
+  busy = false;
+  document.getElementById('send').disabled = false;
+}
+
+function addMsg(role, text) {
+  const msgs = document.getElementById('messages');
+  const d = document.createElement('div');
+  d.className = 'msg ' + role;
+  const who = document.createElement('div');
+  who.className = 'msg-who';
+  who.textContent = role === 'user' ? 'Вы' : 'Аккорд';
+  const b = document.createElement('div');
+  b.className = 'bubble';
+  b.textContent = text;
+  d.appendChild(who); d.appendChild(b);
+  msgs.appendChild(d);
+  msgs.scrollTop = msgs.scrollHeight;
+  return d;
+}
+
+function addTyping() {
+  const msgs = document.getElementById('messages');
+  const d = document.createElement('div');
+  d.className = 'msg ai';
+  const who = document.createElement('div');
+  who.className = 'msg-who'; who.textContent = 'Аккорд';
+  const t = document.createElement('div');
+  t.className = 'typing-wrap';
+  t.innerHTML = '<span></span><span></span><span></span>';
+  d.appendChild(who); d.appendChild(t);
+  msgs.appendChild(d); msgs.scrollTop = msgs.scrollHeight;
+  return d;
+}
+
+function setStatus(m) { document.getElementById('status').textContent = m; }
+
+// Начальная анимация настроения
+setTimeout(() => applyMood('любопытство'), 1000);
+setTimeout(() => applyMood('спокойствие'), 4000);
+setTimeout(() => applyMood('нейтраль'), 7000);
+</script>
+</body>
+</html>
