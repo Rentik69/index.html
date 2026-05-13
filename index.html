@@ -5,12 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <meta name="theme-color" content="#08080f">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="Аккорд">
-<link rel="manifest" href="manifest.json">
 <title>Аккорд Pro</title>
 <link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@700;900&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
-<!-- Подключаем библиотеку для Markdown -->
 <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 <style>
 :root {
@@ -20,150 +16,71 @@
   --text: #ffffff; --muted: #9090b0; --speed: 6s;
 }
 * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
-html, body { height: 100%; width: 100%; background: var(--bg); color: var(--text); font-family: 'Inter', sans-serif; overflow: hidden; position: fixed; touch-action: manipulation; }
-.blob { position: fixed; border-radius: 50%; filter: blur(80px); pointer-events: none; z-index: 0; transition: background 3s ease; }
+html, body { height: 100%; width: 100%; background: var(--bg); color: var(--text); font-family: 'Inter', sans-serif; overflow: hidden; position: fixed; }
+.blob { position: fixed; border-radius: 50%; filter: blur(80px); pointer-events: none; z-index: 0; }
 .b1 { width: 300px; height: 300px; opacity: 0.13; top: -80px; right: -60px; background: radial-gradient(circle, var(--c1), transparent); animation: f1 var(--speed) ease-in-out infinite alternate; }
 .b2 { width: 250px; height: 250px; opacity: 0.10; bottom: 100px; left: -60px; background: radial-gradient(circle, var(--c2), transparent); animation: f2 calc(var(--speed)*1.3) ease-in-out infinite alternate; }
-.b3 { width: 180px; height: 180px; opacity: 0.08; top: 45%; left: 35%; background: radial-gradient(circle, var(--c3), transparent); animation: f3 calc(var(--speed)*0.8) ease-in-out infinite alternate; }
-@keyframes f1 { 0%{transform:translate(0,0) scale(1)} 100%{transform:translate(30px,40px) scale(1.1)} }
-@keyframes f2 { 0%{transform:translate(0,0) scale(1)} 100%{transform:translate(40px,-30px) scale(1.15)} }
-@keyframes f3 { 0%{transform:translate(0,0) scale(1)} 100%{transform:translate(-40px,30px) scale(1.2)} }
-#mood-bar { position: fixed; top: 0; left: 0; right: 0; height: 3px; background: linear-gradient(90deg, var(--c1), var(--c2), var(--c3)); z-index: 50; transition: all 3s ease; }
+@keyframes f1 { 0%{transform:translate(0,0)} 100%{transform:translate(30px,40px)} }
+@keyframes f2 { 0%{transform:translate(0,0)} 100%{transform:translate(40px,-30px)} }
 #app { display: flex; flex-direction: column; height: 100%; position: relative; z-index: 1; }
-header { padding: 18px 16px 12px; border-bottom: 1px solid var(--border); background: rgba(8,8,15,0.85); backdrop-filter: blur(20px); display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
-.avatar { width: 44px; height: 44px; border-radius: 14px; background: linear-gradient(135deg, var(--c1), var(--c2)); display: flex; align-items: center; justify-content: center; font-size: 22px; flex-shrink: 0; animation: ap 3s ease-in-out infinite; }
-@keyframes ap { 0%,100%{box-shadow:0 0 15px rgba(123,47,255,0.3)} 50%{box-shadow:0 0 30px rgba(0,229,255,0.5)} }
-.hinfo { flex: 1; min-width: 0; }
-.hinfo h1 { font-family: 'Unbounded', sans-serif; font-size: 15px; font-weight: 900; color: #fff; }
-#mood-label { font-size: 11px; color: var(--muted); margin-top: 2px; transition: color 2s ease; }
-.hbtn { min-width: 44px; height: 44px; border-radius: 12px; border: 1px solid var(--border); background: rgba(255,255,255,0.05); color: var(--muted); cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s; flex-shrink: 0; font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 700; padding: 0 10px; }
-.hbtn:active { background: rgba(255,255,255,0.14); color: #fff; }
-.hbtn.accent { color: var(--c2); border-color: rgba(0,229,255,0.3); }
-#messages { flex: 1; overflow-y: auto; overflow-x: hidden; padding: 16px 14px 8px; display: flex; flex-direction: column; gap: 16px; scroll-behavior: smooth; -webkit-overflow-scrolling: touch; }
-#messages::-webkit-scrollbar { display: none; }
-.welcome { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; gap: 20px; text-align: center; padding: 20px; }
-.w-orb { width: 100px; height: 100px; border-radius: 50%; background: conic-gradient(var(--c1), var(--c2), var(--c3), var(--c1)); display: flex; align-items: center; justify-content: center; font-size: 46px; animation: orb-s 8s linear infinite, orb-f 3s ease-in-out infinite; position: relative; }
-.w-orb::before { content:''; position:absolute; inset:-10px; border-radius:50%; background:conic-gradient(transparent 60%, var(--c2), transparent); animation:rs 3s linear infinite; opacity:0.5; }
-@keyframes orb-s { to { filter: hue-rotate(360deg); } }
-@keyframes orb-f { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-10px)} }
-@keyframes rs { to { transform: rotate(360deg); } }
-.w-title { font-family: 'Unbounded', sans-serif; font-size: 22px; font-weight: 900; }
-.w-title span { background: linear-gradient(90deg, var(--c1), var(--c2), var(--c3)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
-.w-sub { font-size: 14px; color: var(--muted); line-height: 1.7; max-width: 280px; }
-.chips { display: flex; flex-direction: column; gap: 10px; width: 100%; max-width: 320px; }
-.chip { background: var(--s1); border: 1px solid var(--border); border-radius: 14px; padding: 15px 16px; font-size: 15px; color: var(--muted); cursor: pointer; transition: all 0.2s; display: flex; align-items: center; gap: 10px; text-align: left; font-family: 'Inter', sans-serif; font-weight: 500; min-height: 54px; }
-.chip:active { background: var(--s2); color: #fff; border-color: var(--c2); }
-.msg { display: flex; flex-direction: column; gap: 4px; max-width: 92%; animation: fu 0.25s ease; }
-@keyframes fu { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:translateY(0)} }
-.msg.user { align-self: flex-end; align-items: flex-end; }
-.msg.ai { align-self: flex-start; align-items: flex-start; }
-.msg-who { font-size: 11px; color: var(--muted); letter-spacing: 0.08em; text-transform: uppercase; padding: 0 5px; font-weight: 600; }
-.bubble { padding: 14px 18px; border-radius: 18px; font-size: 16px; line-height: 1.6; word-break: break-word; }
-.bubble p { margin-bottom: 10px; }
-.bubble p:last-child { margin-bottom: 0; }
-.bubble code { background: rgba(255,255,255,0.1); padding: 2px 5px; border-radius: 4px; font-family: monospace; font-size: 0.9em; }
-.bubble pre { background: rgba(0,0,0,0.3); padding: 12px; border-radius: 10px; overflow-x: auto; margin: 10px 0; border: 1px solid var(--border); }
-.bubble ul, .bubble ol { margin-left: 20px; margin-bottom: 10px; }
-.msg.user .bubble { background: linear-gradient(135deg, rgba(123,47,255,0.55), rgba(0,229,255,0.3)); border: 1px solid rgba(123,47,255,0.4); border-bottom-right-radius: 5px; color: #fff; }
-.msg.ai .bubble { background: rgba(255,255,255,0.09); border: 1px solid rgba(255,255,255,0.13); border-bottom-left-radius: 5px; color: #fff; }
-.typing-wrap { display: flex; gap: 6px; padding: 16px 18px; background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.1); border-radius: 18px; border-bottom-left-radius: 5px; align-items: center; }
-.typing-wrap span { width: 8px; height: 8px; border-radius: 50%; opacity: 0.4; animation: bl 1.4s ease-in-out infinite; }
-.typing-wrap span:nth-child(1) { background: var(--c1); }
-.typing-wrap span:nth-child(2) { background: var(--c2); animation-delay: 0.2s; }
-.typing-wrap span:nth-child(3) { background: var(--c3); animation-delay: 0.4s; }
-@keyframes bl { 0%,80%,100%{opacity:0.3;transform:scale(1)} 40%{opacity:1;transform:scale(1.5)} }
-#input-area { padding: 10px 14px 18px; background: rgba(8,8,15,0.92); backdrop-filter: blur(20px); border-top: 1px solid var(--border); flex-shrink: 0; }
-#voice-bar { display: none; margin-bottom: 8px; background: rgba(0,229,255,0.1); border: 1px solid rgba(0,229,255,0.3); border-radius: 12px; padding: 10px 14px; font-size: 14px; color: var(--c2); font-weight: 500; }
-#voice-bar.on { display: block; animation: pulse-voice 1.5s infinite; }
-@keyframes pulse-voice { 0%{opacity:0.6} 50%{opacity:1} 100%{opacity:0.6} }
-.input-row { display: flex; align-items: flex-end; gap: 10px; }
-#txt { flex: 1; background: var(--s1); border: 1px solid var(--border); border-radius: 16px; padding: 15px 16px; color: #fff; font-family: 'Inter', sans-serif; font-size: 16px; font-weight: 400; resize: none; outline: none; max-height: 130px; min-height: 54px; transition: border-color 0.2s; -webkit-appearance: none; line-height: 1.5; }
-#txt:focus { border-color: rgba(123,47,255,0.5); background: var(--s2); }
-#txt::placeholder { color: var(--muted); }
-.btn { width: 54px; height: 54px; border-radius: 16px; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 22px; flex-shrink: 0; transition: all 0.15s; }
-#mic { background: var(--s1); border: 1px solid var(--border); color: var(--muted); }
-#mic.on { background: linear-gradient(135deg, #ff2faa, #ff5050); border: none; color: white; animation: mp 0.8s ease-in-out infinite; }
-@keyframes mp { 0%,100%{box-shadow:0 0 20px rgba(255,47,170,0.4);transform:scale(1)} 50%{box-shadow:0 0 40px rgba(255,47,170,0.7);transform:scale(1.06)} }
-#send { background: linear-gradient(135deg, var(--c1), var(--c2)); color: white; box-shadow: 0 4px 20px rgba(123,47,255,0.35); }
-#send:disabled { opacity: 0.2; box-shadow: none; }
-#status { font-size: 12px; color: var(--muted); text-align: center; margin-top: 8px; min-height: 16px; font-weight: 500; }
-.overlay { position: fixed; inset: 0; z-index: 100; background: rgba(4,4,12,0.97); backdrop-filter: blur(20px); display: flex; align-items: center; justify-content: center; padding: 20px; }
-.card { background: var(--s1); border: 1px solid var(--border); border-radius: 24px; padding: 30px 22px; max-width: 360px; width: 100%; }
-.card-icon { font-size: 48px; text-align: center; margin-bottom: 16px; }
-.card h2 { font-family: 'Unbounded', sans-serif; font-size: 18px; font-weight: 900; margin-bottom: 10px; background: linear-gradient(90deg, var(--c1), var(--c2)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
-.card p { font-size: 13px; color: var(--muted); line-height: 1.7; margin-bottom: 20px; }
-.card input { width: 100%; background: var(--s2); border: 1px solid var(--border); border-radius: 14px; padding: 16px; color: #fff; font-family: 'Inter', sans-serif; font-size: 15px; outline: none; margin-bottom: 14px; -webkit-appearance: none; }
-.card-btn { width: 100%; padding: 16px; background: linear-gradient(135deg, var(--c1), var(--c2)); border: none; border-radius: 14px; color: white; font-family: 'Unbounded', sans-serif; font-weight: 700; font-size: 14px; cursor: pointer; }
-#model-sheet { position: fixed; inset: 0; z-index: 100; background: rgba(4,4,12,0.96); backdrop-filter: blur(20px); display: none; align-items: flex-end; justify-content: center; }
-#model-sheet.open { display: flex; }
-.sheet-box { background: var(--s1); border: 1px solid var(--border); border-radius: 22px 22px 0 0; padding: 22px 18px 36px; width: 100%; animation: su 0.3s ease; }
-@keyframes su { from{transform:translateY(100%)} to{transform:translateY(0)} }
-.m-opt { padding: 16px; border-radius: 14px; cursor: pointer; transition: all 0.15s; margin-bottom: 8px; display: flex; align-items: center; gap: 14px; min-height: 62px; }
-.m-opt.sel { background: rgba(0,229,255,0.07); border: 1px solid rgba(0,229,255,0.25); }
-.m-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--muted); flex-shrink: 0; }
-.m-opt.sel .m-dot { background: var(--c2); box-shadow: 0 0 10px var(--c2); }
-.m-name { font-size: 15px; color: #fff; font-weight: 600; }
-.m-desc { font-size: 12px; color: var(--muted); margin-top: 3px; }
+header { padding: 18px 16px; border-bottom: 1px solid var(--border); background: rgba(8,8,15,0.8); backdrop-filter: blur(20px); display: flex; align-items: center; gap: 10px; }
+.avatar { width: 44px; height: 44px; border-radius: 14px; background: linear-gradient(135deg, var(--c1), var(--c2)); display: flex; align-items: center; justify-content: center; font-size: 22px; }
+.hinfo { flex: 1; }
+.hinfo h1 { font-family: 'Unbounded', sans-serif; font-size: 14px; font-weight: 900; }
+#mood-label { font-size: 10px; color: var(--muted); }
+.hbtn { min-width: 44px; height: 44px; border-radius: 12px; border: 1px solid var(--border); background: rgba(255,255,255,0.05); color: #fff; cursor: pointer; }
+#messages { flex: 1; overflow-y: auto; padding: 20px 14px; display: flex; flex-direction: column; gap: 16px; }
+.msg { max-width: 90%; display: flex; flex-direction: column; gap: 4px; animation: fu 0.3s ease; }
+@keyframes fu { from{opacity:0; transform:translateY(10px)} to{opacity:1; transform:translateY(0)} }
+.msg.user { align-self: flex-end; }
+.msg.ai { align-self: flex-start; }
+.bubble { padding: 12px 16px; border-radius: 18px; font-size: 15px; line-height: 1.5; }
+.msg.user .bubble { background: linear-gradient(135deg, var(--c1), var(--c2)); border-bottom-right-radius: 4px; }
+.msg.ai .bubble { background: var(--s1); border: 1px solid var(--border); border-bottom-left-radius: 4px; }
+.bubble pre { background: #000; padding: 10px; border-radius: 8px; margin: 8px 0; overflow-x: auto; font-size: 13px; }
+.bubble code { font-family: monospace; color: var(--c2); }
+#input-area { padding: 15px; background: var(--bg); border-top: 1px solid var(--border); }
+.input-row { display: flex; gap: 10px; align-items: flex-end; }
+#txt { flex: 1; background: var(--s1); border: 1px solid var(--border); border-radius: 14px; padding: 14px; color: #fff; resize: none; max-height: 120px; outline: none; }
+.btn { width: 50px; height: 50px; border-radius: 14px; border: none; cursor: pointer; font-size: 20px; display: flex; align-items: center; justify-content: center; }
+#mic { background: var(--s2); color: var(--muted); }
+#mic.on { background: #ff3366; color: #fff; animation: pulse 1s infinite; }
+#send { background: var(--c1); color: #fff; }
+@keyframes pulse { 0%{opacity:1} 50%{opacity:0.5} 100%{opacity:1} }
+.overlay { position: fixed; inset: 0; background: #08080f; z-index: 100; display: flex; align-items: center; justify-content: center; padding: 20px; }
+.card { background: var(--s1); padding: 30px; border-radius: 20px; width: 100%; max-width: 340px; text-align: center; }
+.card input { width: 100%; padding: 15px; border-radius: 10px; border: 1px solid var(--border); background: #000; color: #fff; margin: 15px 0; outline: none; }
+.card button { width: 100%; padding: 15px; border-radius: 10px; border: none; background: var(--c1); color: #fff; font-weight: 700; cursor: pointer; }
+#status { font-size: 11px; text-align: center; color: var(--muted); margin-top: 10px; }
+#voice-bar { display: none; text-align: center; padding: 5px; font-size: 12px; color: var(--c2); }
+#voice-bar.on { display: block; }
 </style>
 </head>
 <body>
-<div class="blob b1"></div>
-<div class="blob b2"></div>
-<div class="blob b3"></div>
-<div id="mood-bar"></div>
+<div class="blob b1"></div><div class="blob b2"></div>
 
 <div class="overlay" id="key-modal">
   <div class="card">
-    <div class="card-icon">⚡</div>
     <h2>АККОРД PRO</h2>
-    <p>Вставь свой Groq API ключ. Мы добавили поддержку Markdown и улучшили голос.</p>
-    <input type="password" id="key-input" placeholder="gsk_..." autocomplete="off">
-    <button class="card-btn" onclick="saveKey()">ВОЙТИ →</button>
-  </div>
-</div>
-
-<div id="model-sheet" onclick="if(event.target===this)this.classList.remove('open')">
-  <div class="sheet-box">
-    <div class="m-opt sel" data-model="llama-3.1-8b-instant">
-      <div class="m-dot"></div>
-      <div><div class="m-name">Llama 3.1 8B ⚡</div><div class="m-desc">Быстро и точно</div></div>
-    </div>
-    <div class="m-opt" data-model="llama-3.3-70b-versatile">
-      <div class="m-dot"></div>
-      <div><div class="m-name">Llama 3.3 70B</div><div class="m-desc">Для сложных задач</div></div>
-    </div>
+    <p style="font-size: 13px; color: #9090b0; margin-top: 10px;">Введи свой API ключ Groq</p>
+    <input type="password" id="key-input" placeholder="gsk_...">
+    <button onclick="saveKey()">НАЧАТЬ РАБОТУ</button>
   </div>
 </div>
 
 <div id="app">
   <header>
     <div class="avatar">🤖</div>
-    <div class="hinfo">
-      <h1>АККОРД</h1>
-      <div id="mood-label">Нейтральное</div>
-    </div>
-    <button class="hbtn accent" id="voice-toggle" onclick="toggleVoice()">🔊</button>
-    <button class="hbtn" id="model-label" onclick="document.getElementById('model-sheet').classList.add('open')">8B⚡</button>
+    <div class="hinfo"><h1>АККОРД</h1><div id="mood-label">Система готова</div></div>
+    <button class="hbtn" onclick="toggleVoice()" id="v-btn">🔊</button>
     <button class="hbtn" onclick="forgetKey()">🔑</button>
   </header>
-
-  <div id="messages">
-    <div class="welcome" id="welcome">
-      <div class="w-orb">🧠</div>
-      <div class="w-title"><span>Привет, Роман!</span></div>
-      <p class="w-sub">Я обновился. Теперь понимаю код и лучше слышу.</p>
-      <div class="chips">
-        <div class="chip" onclick="useChip(this)">🎙️ Начни голосовой ввод</div>
-        <div class="chip" onclick="useChip(this)">💻 Напиши код на Python</div>
-      </div>
-    </div>
-  </div>
-
+  <div id="messages"></div>
   <div id="input-area">
-    <div id="voice-bar"></div>
+    <div id="voice-bar">● Слушаю тебя...</div>
     <div class="input-row">
       <button class="btn" id="mic" onclick="toggleMic()">🎙️</button>
-      <textarea id="txt" placeholder="Сообщение..." rows="1" onkeydown="onKey(event)" oninput="resize(this)"></textarea>
+      <textarea id="txt" placeholder="Напиши что-нибудь..." rows="1" oninput="this.style.height='auto';this.style.height=this.scrollHeight+'px'"></textarea>
       <button class="btn" id="send" onclick="send()">↑</button>
     </div>
     <div id="status"></div>
@@ -171,176 +88,22 @@ header { padding: 18px 16px 12px; border-bottom: 1px solid var(--border); backgr
 </div>
 
 <script>
-// Настройки настроения
-const MOODS = {
-  радость: {c1:'#ffcc00',c2:'#ff8800',c3:'#ff4400',label:'😄 Радостное',speed:'4s'},
-  грусть: {c1:'#4488ff',c2:'#2255cc',c3:'#8888ff',label:'😔 Задумчивое',speed:'10s'},
-  злость: {c1:'#ff2222',c2:'#ff6600',c3:'#ff0055',label:'😤 Напряжённое',speed:'3s'},
-  спокойствие: {c1:'#00e5b0',c2:'#0077ff',c3:'#00ccff',label:'😌 Спокойное',speed:'8s'},
-  нейтраль: {c1:'#7b2fff',c2:'#00e5ff',c3:'#2fff7b',label:'🌀 Нейтральное',speed:'6s'}
-};
-
-let apiKey='', model='llama-3.1-8b-instant', history=[], busy=false, voiceOn=true;
+let apiKey = localStorage.getItem('akkord_key_pro') || '';
+let history = [];
+let voiceOn = true;
+let busy = false;
 let recognition = null;
-let isListening = false;
 
-// Инициализация Markdown
-marked.setOptions({ breaks: true, gfm: true });
-
-// --- ЛОГИКА ГОЛОСА (УЛУЧШЕННАЯ) ---
-function initSpeech() {
-  const Speech = window.SpeechRecognition || window.webkitSpeechRecognition;
-  if (!Speech) return null;
-  
-  const rec = new Speech();
-  rec.lang = 'ru-RU';
-  rec.interimResults = true;
-  rec.continuous = false; // Для мобильных лучше false (стабильнее)
-
-  rec.onstart = () => {
-    isListening = true;
-    document.getElementById('mic').classList.add('on');
-    document.getElementById('voice-bar').classList.add('on');
-    document.getElementById('voice-bar').textContent = '● Слушаю тебя...';
-    setStatus('Говорите');
-  };
-
-  rec.onresult = (e) => {
-    const text = Array.from(e.results).map(r => r[0].transcript).join('');
-    document.getElementById('txt').value = text;
-    resize(document.getElementById('txt'));
-  };
-
-  rec.onend = () => {
-    const val = document.getElementById('txt').value.trim();
-    stopMicUI();
-    if (val.length > 2) send(); // Автоотправка если фраза длинная
-  };
-
-  rec.onerror = (e) => {
-    console.error('SR Error:', e.error);
-    stopMicUI();
-    if(e.error === 'not-allowed') alert('Включи доступ к микрофону в браузере!');
-  };
-
-  return rec;
-}
-
-function toggleMic() {
-  if (isListening) {
-    recognition.stop();
-    return;
-  }
-  if (!recognition) recognition = initSpeech();
-  if (recognition) recognition.start();
-}
-
-function stopMicUI() {
-  isListening = false;
-  document.getElementById('mic').classList.remove('on');
-  document.getElementById('voice-bar').classList.remove('on');
-  setStatus('');
-}
-
-// --- ОСНОВНАЯ ЛОГИКА ---
-
-function applyMood(mood) {
-  const m = MOODS[mood] || MOODS.нейтраль;
-  document.documentElement.style.setProperty('--c1', m.c1);
-  document.documentElement.style.setProperty('--c2', m.c2);
-  document.documentElement.style.setProperty('--c3', m.c3);
-  document.getElementById('mood-label').textContent = m.label;
-}
-
-async function send() {
-  const inp = document.getElementById('txt');
-  const text = inp.value.trim();
-  if (!text || busy) return;
-
-  if(document.getElementById('welcome')) document.getElementById('welcome').remove();
-  
-  inp.value = ''; resize(inp);
-  addMsg('user', text);
-  
-  // Управление контекстом (храним последние 10 сообщений)
-  history.push({role:'user', content:text});
-  if (history.length > 10) history = history.slice(-10);
-
-  busy = true; setStatus('Аккорд думает...');
-  const t = addTyping();
-
-  try {
-    const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
-      body: JSON.stringify({
-        model,
-        messages: [
-          {role:'system', content:'Ты профессиональный разработчик и ассистент Роман. Отвечай кратко, используй Markdown для кода.'},
-          ...history
-        ]
-      })
-    });
-
-    const data = await res.json();
-    t.remove();
-    
-    if (data.choices) {
-      const reply = data.choices[0].message.content;
-      history.push({role:'assistant', content:reply});
-      addMsg('ai', reply);
-      if (voiceOn) speak(reply);
-    } else {
-      throw new Error('Ошибка API');
-    }
-  } catch (e) {
-    t.remove();
-    addMsg('ai', 'Ошибка соединения. Проверь ключ.');
-  } finally {
-    busy = false; setStatus('');
-  }
-}
-
-function addMsg(role, text) {
-  const msgs = document.getElementById('messages');
-  const d = document.createElement('div');
-  d.className = `msg ${role}`;
-  // Используем marked для рендеринга Markdown в AI ответах
-  const content = role === 'ai' ? marked.parse(text) : `<p>${text}</p>`;
-  d.innerHTML = `<div class="msg-who">${role==='user'?'Вы':'Аккорд'}</div><div class="bubble">${content}</div>`;
-  msgs.appendChild(d);
-  msgs.scrollTop = msgs.scrollHeight;
-}
-
-function addTyping() {
-  const msgs = document.getElementById('messages');
-  const d = document.createElement('div');
-  d.className = 'msg ai';
-  d.innerHTML = `<div class="msg-who">Аккорд</div><div class="typing-wrap"><span></span><span></span><span></span></div>`;
-  msgs.appendChild(d);
-  msgs.scrollTop = msgs.scrollHeight;
-  return d;
-}
-
-function speak(text) {
-  if (!window.speechSynthesis) return;
-  window.speechSynthesis.cancel();
-  const msg = new SpeechSynthesisUtterance(text.replace(/[#*`]/g, '').substring(0, 250));
-  msg.lang = 'ru-RU';
-  window.speechSynthesis.speak(msg);
-}
-
-function toggleVoice() {
-  voiceOn = !voiceOn;
-  document.getElementById('voice-toggle').textContent = voiceOn ? '🔊' : '🔇';
-  if (!voiceOn) window.speechSynthesis.cancel();
-}
+if (apiKey) document.getElementById('key-modal').style.display = 'none';
 
 function saveKey() {
-  apiKey = document.getElementById('key-input').value.trim();
-  if (apiKey.startsWith('gsk_')) {
-    localStorage.setItem('akkord_key_pro', apiKey);
+  const val = document.getElementById('key-input').value.trim();
+  if (val.startsWith('gsk_')) {
+    apiKey = val;
+    localStorage.setItem('akkord_key_pro', val);
     document.getElementById('key-modal').style.display = 'none';
+  } else {
+    alert('Неверный формат ключа!');
   }
 }
 
@@ -349,25 +112,100 @@ function forgetKey() {
   location.reload();
 }
 
-function resize(el) { el.style.height='auto'; el.style.height=el.scrollHeight+'px'; }
-function onKey(e) { if(e.key==='Enter' && !e.shiftKey) { e.preventDefault(); send(); } }
-function setStatus(s) { document.getElementById('status').textContent = s; }
-function useChip(el) { document.getElementById('txt').value = el.textContent.split(' ').slice(1).join(' '); send(); }
-
-// Загрузка ключа
-const saved = localStorage.getItem('akkord_key_pro');
-if (saved) { apiKey = saved; document.getElementById('key-modal').style.display = 'none'; }
-
-// Выбор модели
-document.querySelectorAll('.m-opt').forEach(opt => {
-  opt.onclick = () => {
-    model = opt.dataset.model;
-    document.querySelectorAll('.m-opt').forEach(o => o.classList.remove('sel'));
-    opt.classList.add('sel');
-    document.getElementById('model-label').textContent = model.includes('8b') ? '8B⚡' : '70B';
-    document.getElementById('model-sheet').classList.remove('open');
+// УЛУЧШЕННЫЙ ГОЛОС
+function initSpeech() {
+  const Speech = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!Speech) return null;
+  const rec = new Speech();
+  rec.lang = 'ru-RU';
+  rec.interimResults = true;
+  rec.onstart = () => {
+    document.getElementById('mic').classList.add('on');
+    document.getElementById('voice-bar').classList.add('on');
   };
-});
+  rec.onresult = (e) => {
+    const text = Array.from(e.results).map(r => r[0].transcript).join('');
+    document.getElementById('txt').value = text;
+  };
+  rec.onend = () => {
+    document.getElementById('mic').classList.remove('on');
+    document.getElementById('voice-bar').classList.remove('on');
+    if (document.getElementById('txt').value.length > 2) send();
+  };
+  rec.onerror = () => {
+    document.getElementById('mic').classList.remove('on');
+    document.getElementById('voice-bar').classList.remove('on');
+  };
+  return rec;
+}
+
+function toggleMic() {
+  if (!recognition) recognition = initSpeech();
+  try { recognition.start(); } catch(e) { recognition.stop(); }
+}
+
+async function send() {
+  const inp = document.getElementById('txt');
+  const text = inp.value.trim();
+  if (!text || busy || !apiKey) return;
+
+  inp.value = ''; inp.style.height = 'auto';
+  addMsg('user', text);
+  history.push({role:'user', content:text});
+  if (history.length > 8) history = history.shift();
+
+  busy = true;
+  document.getElementById('status').textContent = 'Аккорд думает...';
+
+  try {
+    const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+      method: 'POST',
+      headers: { 
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiKey}`
+      },
+      body: JSON.stringify({
+        model: "llama-3.1-8b-instant",
+        messages: [{role:'system', content:'Ты - Аккорд, краткий и эффективный помощник.'}, ...history]
+      })
+    });
+
+    const data = await res.json();
+    if (data.error) throw new Error(data.error.message);
+
+    const reply = data.choices[0].message.content;
+    addMsg('ai', reply);
+    history.push({role:'assistant', content:reply});
+    if (voiceOn) speak(reply);
+  } catch (e) {
+    addMsg('ai', '❌ Ошибка: ' + e.message);
+  } finally {
+    busy = false;
+    document.getElementById('status').textContent = '';
+  }
+}
+
+function addMsg(role, text) {
+  const div = document.createElement('div');
+  div.className = `msg ${role}`;
+  const content = role === 'ai' ? marked.parse(text) : text;
+  div.innerHTML = `<div class="bubble">${content}</div>`;
+  document.getElementById('messages').appendChild(div);
+  document.getElementById('messages').scrollTop = document.getElementById('messages').scrollHeight;
+}
+
+function speak(text) {
+  if (!window.speechSynthesis) return;
+  window.speechSynthesis.cancel();
+  const ut = new SpeechSynthesisUtterance(text.replace(/[#*`]/g, '').substring(0, 250));
+  ut.lang = 'ru-RU';
+  window.speechSynthesis.speak(ut);
+}
+
+function toggleVoice() {
+  voiceOn = !voiceOn;
+  document.getElementById('v-btn').textContent = voiceOn ? '🔊' : '🔇';
+}
 </script>
 </body>
 </html>
