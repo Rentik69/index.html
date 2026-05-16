@@ -74,8 +74,8 @@ header { padding: 18px 16px 12px; border-bottom: 1px solid var(--border); backgr
 #txt:focus { border-color: rgba(123,47,255,0.5); background: var(--s2); }
 #txt::placeholder { color: var(--muted); }
 .btn { width: 54px; height: 54px; border-radius: 16px; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 22px; flex-shrink: 0; transition: all 0.15s; }
-#mic { background: var(--s1); border: 1px solid var(--border); color: var(--muted); }
-#mic.on { background: linear-gradient(135deg, #ff2faa, #ff5050); border: none; color: white; animation: mp 0.8s ease-in-out infinite; }
+#mic-indicator { background: var(--s1); border: 1px solid var(--border); color: var(--muted); pointer-events: none; }
+#mic-indicator.on { background: linear-gradient(135deg, #ff2faa, #ff5050); border: none; color: white; animation: mp 0.8s ease-in-out infinite; }
 @keyframes mp { 0%,100%{box-shadow:0 0 20px rgba(255,47,170,0.4);transform:scale(1)} 50%{box-shadow:0 0 40px rgba(255,47,170,0.7);transform:scale(1.06)} }
 #send { background: linear-gradient(135deg, var(--c1), var(--c2)); color: white; box-shadow: 0 4px 20px rgba(123,47,255,0.35); transition: background 3s ease; }
 #send:active { transform: scale(0.88); }
@@ -148,8 +148,6 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 22px;
 <div id="settings-sheet" onclick="if(event.target===this)this.classList.remove('open')">
   <div class="sheet-box">
     <div class="sheet-title">⚙️ НАСТРОЙКИ</div>
-
-    <!-- Голосовые ответы -->
     <div class="s-row">
       <div class="s-info">
         <div class="s-label">🔊 Голосовые ответы</div>
@@ -157,8 +155,13 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 22px;
       </div>
       <div class="toggle on" id="t-voice" onclick="toggleSetting('voice')"></div>
     </div>
-
-    <!-- Уведомление при ответе -->
+    <div class="s-row">
+      <div class="s-info">
+        <div class="s-label">🎙️ Автослушание</div>
+        <div class="s-desc">Слушает сам после ответа</div>
+      </div>
+      <div class="toggle on" id="t-auto" onclick="toggleSetting('auto')"></div>
+    </div>
     <div class="s-row" style="flex-direction:column;align-items:flex-start">
       <div class="s-label">🔔 Уведомление при ответе</div>
       <div class="s-desc" style="margin-top:4px">Как уведомить когда Аккорд ответил</div>
@@ -169,11 +172,9 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 22px;
         <div class="s-opt" data-val="none" onclick="selectOpt('notify',this)">Тихо</div>
       </div>
     </div>
-
-    <!-- Уведомление при активации микрофона -->
     <div class="s-row" style="flex-direction:column;align-items:flex-start">
-      <div class="s-label">🎙️ Активация микрофона</div>
-      <div class="s-desc" style="margin-top:4px">Сигнал когда микрофон включился</div>
+      <div class="s-label">🎙️ Сигнал активации микрофона</div>
+      <div class="s-desc" style="margin-top:4px">Когда микрофон включился</div>
       <div class="s-options" id="mic-opts">
         <div class="s-opt" data-val="sound" onclick="selectOpt('mic',this)">🔉 Звук</div>
         <div class="s-opt sel" data-val="vibro" onclick="selectOpt('mic',this)">📳 Вибро</div>
@@ -181,8 +182,6 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 22px;
         <div class="s-opt" data-val="none" onclick="selectOpt('mic',this)">Тихо</div>
       </div>
     </div>
-
-    <!-- Скорость речи -->
     <div class="s-row" style="flex-direction:column;align-items:flex-start">
       <div class="s-label">🗣️ Скорость речи</div>
       <div class="s-desc" style="margin-top:4px" id="rate-label">Нормальная (1.0)</div>
@@ -190,8 +189,6 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 22px;
         <input type="range" min="0.7" max="1.6" step="0.1" value="1.0" id="rate-slider" oninput="updateRate(this.value)">
       </div>
     </div>
-
-    <!-- Тон голоса -->
     <div class="s-row" style="flex-direction:column;align-items:flex-start">
       <div class="s-label">🎵 Тон голоса</div>
       <div class="s-desc" style="margin-top:4px" id="pitch-label">Нормальный (1.0)</div>
@@ -199,8 +196,6 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 22px;
         <input type="range" min="0.5" max="1.8" step="0.1" value="1.0" id="pitch-slider" oninput="updatePitch(this.value)">
       </div>
     </div>
-
-    <!-- Модель -->
     <div class="s-row">
       <div class="s-info">
         <div class="s-label">🤖 Модель ИИ</div>
@@ -208,8 +203,6 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 22px;
       </div>
       <div class="s-opt sel" onclick="document.getElementById('model-sheet').classList.add('open')" style="margin:0" id="model-badge">8B⚡</div>
     </div>
-
-    <!-- Стиль общения -->
     <div class="s-row" style="flex-direction:column;align-items:flex-start">
       <div class="s-label">💬 Стиль общения</div>
       <div class="s-desc" style="margin-top:4px">Как отвечает Аккорд</div>
@@ -219,8 +212,6 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 22px;
         <div class="s-opt" data-val="detail" onclick="selectOpt('style',this)">Подробно</div>
       </div>
     </div>
-
-    <!-- Сбросить ключ -->
     <button class="danger-btn" onclick="if(confirm('Забыть API ключ?'))forgetKey()">🔑 Сменить API ключ</button>
   </div>
 </div>
@@ -264,7 +255,7 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 22px;
     <div class="welcome" id="welcome">
       <div class="w-orb">🧠</div>
       <div class="w-title"><span>Привет, Роман!</span></div>
-      <p class="w-sub">Говори или пиши — я слушаю и отвечаю голосом</p>
+      <p class="w-sub">Просто говори — я слушаю и отвечаю голосом</p>
       <div class="chips">
         <div class="chip" onclick="useChip(this)">💡 Объясни что-нибудь интересное</div>
         <div class="chip" onclick="useChip(this)">😄 Расскажи анекдот</div>
@@ -276,8 +267,9 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 22px;
   <div id="input-area">
     <div id="voice-bar"></div>
     <div class="input-row">
-      <button class="btn" id="mic" onclick="toggleMic()">🎙️</button>
-      <textarea id="txt" placeholder="Напиши сообщение..." rows="1"
+      <!-- Индикатор микрофона (не кнопка) -->
+      <div class="btn" id="mic-indicator">🎙️</div>
+      <textarea id="txt" placeholder="Или напиши сообщение..." rows="1"
         onkeydown="onKey(event)" oninput="resize(this)"></textarea>
       <button class="btn" id="send" onclick="send()">↑</button>
     </div>
@@ -331,27 +323,24 @@ function applyMood(mood) {
 }
 
 // ══ НАСТРОЙКИ ══
-const DEF = {
-  voice: true, notify: 'sound', mic: 'vibro',
-  rate: 1.0, pitch: 1.0, style: 'short'
-};
+const DEF = { voice:true, auto:true, notify:'sound', mic:'vibro', rate:1.0, pitch:1.0, style:'short' };
 let cfg = {};
 try { cfg = JSON.parse(localStorage.getItem('akkord_cfg') || '{}'); } catch(e) {}
 cfg = Object.assign({}, DEF, cfg);
 
-function saveCfg() {
-  try { localStorage.setItem('akkord_cfg', JSON.stringify(cfg)); } catch(e) {}
-}
+function saveCfg() { try { localStorage.setItem('akkord_cfg', JSON.stringify(cfg)); } catch(e) {} }
 
 function toggleSetting(key) {
   cfg[key] = !cfg[key];
-  saveCfg();
-  applySettings();
+  saveCfg(); applySettings();
+  if (key === 'auto') {
+    if (cfg.auto) startAutoListen();
+    else { stopListening(); setStatus('Автослушание выключено'); }
+  }
 }
 
 function selectOpt(group, el) {
-  const parent = el.closest('.s-options') || document.getElementById(group+'-opts');
-  parent.querySelectorAll('.s-opt').forEach(o => o.classList.remove('sel'));
+  document.querySelectorAll(`#${group}-opts .s-opt`).forEach(o => o.classList.remove('sel'));
   el.classList.add('sel');
   cfg[group] = el.dataset.val;
   saveCfg();
@@ -359,76 +348,71 @@ function selectOpt(group, el) {
 
 function updateRate(v) {
   cfg.rate = parseFloat(v);
-  const labels = {0.7:'Медленная',0.8:'Медленная',0.9:'Чуть медленнее',1.0:'Нормальная',1.1:'Чуть быстрее',1.2:'Быстрая',1.3:'Быстрая',1.4:'Очень быстрая',1.5:'Очень быстрая',1.6:'Максимальная'};
-  document.getElementById('rate-label').textContent = (labels[v]||'Нормальная') + ' (' + v + ')';
+  const labels = {'0.7':'Медленная','0.8':'Медленная','0.9':'Чуть медленнее','1':'Нормальная','1.1':'Чуть быстрее','1.2':'Быстрая','1.3':'Быстрая','1.4':'Очень быстрая','1.5':'Очень быстрая','1.6':'Максимальная'};
+  document.getElementById('rate-label').textContent = (labels[String(parseFloat(v))]||'Нормальная') + ' (' + v + ')';
   saveCfg();
 }
 
 function updatePitch(v) {
   cfg.pitch = parseFloat(v);
-  const labels = {0.5:'Очень низкий',0.6:'Низкий',0.7:'Низкий',0.8:'Чуть ниже',0.9:'Чуть ниже',1.0:'Нормальный',1.1:'Чуть выше',1.2:'Выше',1.3:'Высокий',1.4:'Высокий',1.5:'Очень высокий',1.6:'Очень высокий',1.7:'Максимальный',1.8:'Максимальный'};
-  document.getElementById('pitch-label').textContent = (labels[v]||'Нормальный') + ' (' + v + ')';
+  const labels = {'0.5':'Очень низкий','0.6':'Низкий','0.7':'Низкий','0.8':'Чуть ниже','0.9':'Чуть ниже','1':'Нормальный','1.1':'Чуть выше','1.2':'Выше','1.3':'Высокий','1.4':'Высокий','1.5':'Очень высокий','1.6':'Очень высокий','1.7':'Максимальный','1.8':'Максимальный'};
+  document.getElementById('pitch-label').textContent = (labels[String(parseFloat(v))]||'Нормальный') + ' (' + v + ')';
   saveCfg();
 }
 
 function applySettings() {
-  // Кнопка голоса в шапке
   const vBtn = document.getElementById('voice-toggle');
   vBtn.textContent = cfg.voice ? '🔊' : '🔇';
   vBtn.className = cfg.voice ? 'hbtn accent' : 'hbtn';
   if (!cfg.voice) window.speechSynthesis.cancel();
-
-  // Тоггл в настройках
-  const t = document.getElementById('t-voice');
-  if (t) { t.className = 'toggle' + (cfg.voice ? ' on' : ''); }
-
-  // Слайдеры
+  const tv = document.getElementById('t-voice');
+  if (tv) tv.className = 'toggle' + (cfg.voice ? ' on' : '');
+  const ta = document.getElementById('t-auto');
+  if (ta) ta.className = 'toggle' + (cfg.auto ? ' on' : '');
   const rs = document.getElementById('rate-slider');
   const ps = document.getElementById('pitch-slider');
   if (rs) { rs.value = cfg.rate; updateRate(cfg.rate); }
   if (ps) { ps.value = cfg.pitch; updatePitch(cfg.pitch); }
-
-  // Опции уведомлений
   ['notify','mic','style'].forEach(group => {
-    const opts = document.querySelectorAll(`#${group}-opts .s-opt`);
-    opts.forEach(o => { o.classList.toggle('sel', o.dataset.val === cfg[group]); });
+    document.querySelectorAll(`#${group}-opts .s-opt`).forEach(o => {
+      o.classList.toggle('sel', o.dataset.val === cfg[group]);
+    });
   });
 }
 
-// ══ ВИБРАЦИЯ ══
-function vibrate(pattern) {
-  if (navigator.vibrate) navigator.vibrate(pattern);
-}
+// ══ ВИБРАЦИЯ И ЗВУК ══
+function vibrate(p) { if (navigator.vibrate) navigator.vibrate(p); }
 
-// ══ ЗВУК АКТИВАЦИИ ══
-function playBeep(freq = 880, dur = 80) {
+function playBeep(freq=880, dur=80) {
   try {
-    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const ctx = new (window.AudioContext||window.webkitAudioContext)();
     const osc = ctx.createOscillator();
     const gain = ctx.createGain();
     osc.connect(gain); gain.connect(ctx.destination);
-    osc.frequency.value = freq;
-    osc.type = 'sine';
+    osc.frequency.value = freq; osc.type = 'sine';
     gain.gain.setValueAtTime(0.3, ctx.currentTime);
     gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + dur/1000);
-    osc.start(ctx.currentTime);
-    osc.stop(ctx.currentTime + dur/1000);
+    osc.start(ctx.currentTime); osc.stop(ctx.currentTime + dur/1000);
   } catch(e) {}
 }
 
 function notifyMicOn() {
-  if (cfg.mic === 'sound' || cfg.mic === 'both') playBeep(880, 80);
-  if (cfg.mic === 'vibro' || cfg.mic === 'both') vibrate([30, 20, 30]);
+  if (cfg.mic==='sound'||cfg.mic==='both') playBeep(880, 80);
+  if (cfg.mic==='vibro'||cfg.mic==='both') vibrate([30,20,30]);
 }
 
 function notifyResponse() {
-  if (cfg.notify === 'sound' || cfg.notify === 'both') playBeep(660, 120);
-  if (cfg.notify === 'vibro' || cfg.notify === 'both') vibrate([40, 30, 40, 30, 80]);
+  if (cfg.notify==='sound'||cfg.notify==='both') playBeep(660, 120);
+  if (cfg.notify==='vibro'||cfg.notify==='both') vibrate([40,30,40,30,80]);
 }
 
 // ══ ГОЛОС ══
 function speakText(text) {
-  if (!cfg.voice || !window.speechSynthesis) return;
+  if (!cfg.voice || !window.speechSynthesis) {
+    // Даже без голоса — после ответа снова слушаем
+    setTimeout(() => { if (cfg.auto && !busy) startAutoListen(); }, 600);
+    return;
+  }
   window.speechSynthesis.cancel();
   const clean = text.replace(/[*_~`#>]/g,'').substring(0, 450);
   const utt = new SpeechSynthesisUtterance(clean);
@@ -445,16 +429,23 @@ function speakText(text) {
   if (best) utt.voice = best;
 
   utt.onstart = () => setStatus('🔊 Говорю...');
-  utt.onend = () => { setStatus(''); notifyResponse(); };
-  utt.onerror = () => setStatus('');
+  utt.onend = () => {
+    setStatus('');
+    notifyResponse();
+    // После ответа — снова слушаем
+    setTimeout(() => { if (cfg.auto && !busy) startAutoListen(); }, 700);
+  };
+  utt.onerror = () => {
+    setStatus('');
+    setTimeout(() => { if (cfg.auto && !busy) startAutoListen(); }, 700);
+  };
   window.speechSynthesis.speak(utt);
 }
 window.speechSynthesis.onvoiceschanged = () => window.speechSynthesis.getVoices();
 
 // ══ API КЛЮЧ ══
-let apiKey = '', model = 'llama-3.1-8b-instant';
-let history = [], busy = false;
-let rec = null, listening = false, finalText = '';
+let apiKey='', model='llama-3.1-8b-instant', history=[], busy=false;
+let rec=null, listening=false, finalText='';
 
 function saveKey() {
   const v = document.getElementById('key-input').value.trim();
@@ -462,14 +453,17 @@ function saveKey() {
   apiKey = v;
   try { localStorage.setItem('akkord_key', v); } catch(e) {}
   document.getElementById('key-modal').style.display = 'none';
-  setStatus('✓ Готов!'); setTimeout(()=>setStatus(''), 2000);
+  setStatus('✓ Готов!');
+  setTimeout(() => { setStatus(''); if (cfg.auto) startAutoListen(); }, 1500);
 }
+
 function forgetKey() {
   try { localStorage.removeItem('akkord_key'); } catch(e) {}
-  apiKey = '';
+  apiKey = ''; stopListening();
   document.getElementById('key-modal').style.display = 'flex';
   document.getElementById('settings-sheet').classList.remove('open');
 }
+
 document.getElementById('key-input').addEventListener('keydown', e => { if (e.key==='Enter') saveKey(); });
 try {
   const sk = localStorage.getItem('akkord_key');
@@ -495,11 +489,11 @@ function initRec() {
   const r = new SR();
   r.lang='ru-RU'; r.continuous=false; r.interimResults=true; r.maxAlternatives=1;
   const bar = document.getElementById('voice-bar');
+  const mic = document.getElementById('mic-indicator');
 
   r.onstart = () => {
     listening = true;
-    document.getElementById('mic').classList.add('on');
-    document.getElementById('mic').textContent = '⏹️';
+    mic.classList.add('on'); mic.textContent = '🎙️';
     bar.classList.add('on'); bar.textContent = '● Слушаю...';
     setStatus('Говорите...');
     notifyMicOn();
@@ -510,43 +504,59 @@ function initRec() {
       if (e.results[i].isFinal) finalText += e.results[i][0].transcript;
       else interim += e.results[i][0].transcript;
     }
-    bar.textContent = '● ' + (finalText || interim || 'Слушаю...');
+    bar.textContent = '● ' + (finalText||interim||'Слушаю...');
     if (interim) applyMood(detectMood(interim));
   };
   r.onerror = e => {
-    if (e.error==='not-allowed') setStatus('⚠️ Разрешите микрофон в настройках');
-    else if (e.error==='no-speech') setStatus('Не услышал — попробуйте ещё');
-    else setStatus('Ошибка: ' + e.error);
-    stopMic(true);
+    if (e.error==='not-allowed') {
+      setStatus('⚠️ Разрешите микрофон в настройках');
+      cfg.auto = false; saveCfg(); applySettings();
+    } else if (e.error==='no-speech') {
+      // Тихо — просто снова слушаем
+      stopListening(false);
+      setTimeout(() => { if (cfg.auto && !busy) startAutoListen(); }, 500);
+    } else {
+      setStatus('Ошибка: ' + e.error);
+      stopListening(true);
+    }
   };
   r.onend = () => {
     if (listening) {
       if (finalText.trim()) {
         document.getElementById('txt').value = finalText.trim();
         resize(document.getElementById('txt'));
-        setTimeout(() => bar.classList.remove('on'), 500);
+        setTimeout(() => bar.classList.remove('on'), 400);
         send();
-      } else { bar.classList.remove('on'); setStatus(''); }
-      stopMic(false);
+      } else {
+        bar.classList.remove('on'); setStatus('');
+        // Тишина — снова слушаем
+        setTimeout(() => { if (cfg.auto && !busy) startAutoListen(); }, 500);
+      }
+      stopListening(false);
     }
   };
   return r;
 }
 
-async function toggleMic() {
-  if (listening) { if (rec) rec.stop(); stopMic(true); return; }
+async function startAutoListen() {
+  if (listening || busy) return;
   try { await navigator.mediaDevices.getUserMedia({audio:true}); } catch(e) {
     setStatus('⚠️ Нет доступа к микрофону'); return;
   }
   if (!rec) { rec=initRec(); if (!rec) { setStatus('Микрофон не поддерживается'); return; } }
-  finalText='';
-  try { rec.start(); } catch(e) { rec=initRec(); try { rec.start(); } catch(e2) { setStatus('Не удалось запустить'); } }
+  finalText = '';
+  try { rec.start(); } catch(e) {
+    rec = initRec();
+    try { rec.start(); } catch(e2) { setStatus('Не удалось запустить микрофон'); }
+  }
 }
-function stopMic(manual=true) {
-  listening=false;
-  document.getElementById('mic').classList.remove('on');
-  document.getElementById('mic').textContent='🎙️';
-  if (manual) { document.getElementById('voice-bar').classList.remove('on'); setStatus(''); }
+
+function stopListening(showStatus=true) {
+  listening = false;
+  const mic = document.getElementById('mic-indicator');
+  mic.classList.remove('on'); mic.textContent = '🎙️';
+  document.getElementById('voice-bar').classList.remove('on');
+  if (showStatus) setStatus('');
 }
 
 // ══ ЧАТ ══
@@ -556,26 +566,25 @@ function getSystemPrompt() {
     normal: 'Отвечай естественно — 2-4 предложения.',
     detail: 'Отвечай подробно и развёрнуто.'
   };
-  return `Ты Аккорд — умный, живой и дружелюбный личный ассистент Романа. Говори по-русски, как настоящий человек — тепло, естественно, без канцелярщины. Чувствуй настроение собеседника и подстраивайся. ${styles[cfg.style]||styles.short} Эмодзи используй умеренно.`;
+  return `Ты Аккорд — умный живой личный ассистент Романа. Говори по-русски как человек — тепло, естественно, без канцелярщины. Чувствуй настроение и подстраивайся. ${styles[cfg.style]||styles.short} Эмодзи умеренно.`;
 }
 
 function useChip(el) {
   document.getElementById('txt').value = el.textContent.replace(/^.\s/,'').trim();
   send();
 }
-function onKey(e) { if (e.key==='Enter' && !e.shiftKey) { e.preventDefault(); send(); } }
+function onKey(e) { if (e.key==='Enter'&&!e.shiftKey) { e.preventDefault(); send(); } }
 function resize(el) { el.style.height='auto'; el.style.height=Math.min(el.scrollHeight,130)+'px'; }
 
 async function send() {
   const inp = document.getElementById('txt');
   const text = inp.value.trim();
-  if (!text || busy) return;
+  if (!text||busy) return;
   const w = document.getElementById('welcome'); if (w) w.remove();
   applyMood(detectMood(text));
   inp.value=''; resize(inp);
   addMsg('user', text);
   history.push({role:'user', content:text});
-  // Лимит истории — экономим токены
   if (history.length > 16) history.splice(0, 2);
   busy=true; document.getElementById('send').disabled=true; setStatus('Думаю...');
   const t = addTyping();
@@ -584,10 +593,9 @@ async function send() {
       method:'POST',
       headers:{'Content-Type':'application/json','Authorization':'Bearer '+apiKey},
       body:JSON.stringify({
-        model,
-        max_tokens: cfg.style==='detail' ? 800 : cfg.style==='normal' ? 500 : 300,
-        temperature: 0.85,
-        messages:[{role:'system', content:getSystemPrompt()}, ...history]
+        model, temperature:0.85,
+        max_tokens: cfg.style==='detail'?800:cfg.style==='normal'?500:300,
+        messages:[{role:'system',content:getSystemPrompt()}, ...history]
       })
     });
     t.remove();
@@ -602,6 +610,9 @@ async function send() {
     t.remove();
     addMsg('ai','⚠️ '+e.message);
     setStatus('Проверь API ключ');
+    busy=false; document.getElementById('send').disabled=false;
+    setTimeout(() => { if (cfg.auto && !busy) startAutoListen(); }, 1000);
+    return;
   }
   busy=false; document.getElementById('send').disabled=false;
 }
@@ -610,12 +621,13 @@ function addMsg(role, text) {
   const msgs = document.getElementById('messages');
   const d = document.createElement('div'); d.className='msg '+role;
   const who = document.createElement('div'); who.className='msg-who';
-  who.textContent = role==='user' ? 'Вы' : 'Аккорд';
+  who.textContent = role==='user'?'Вы':'Аккорд';
   const b = document.createElement('div'); b.className='bubble'; b.textContent=text;
   d.appendChild(who); d.appendChild(b); msgs.appendChild(d);
   msgs.scrollTop = msgs.scrollHeight;
   return d;
 }
+
 function addTyping() {
   const msgs = document.getElementById('messages');
   const d = document.createElement('div'); d.className='msg ai';
@@ -626,6 +638,7 @@ function addTyping() {
   msgs.scrollTop = msgs.scrollHeight;
   return d;
 }
+
 function setStatus(m) { document.getElementById('status').textContent=m; }
 
 // ══ СТАРТ ══
@@ -633,6 +646,8 @@ applySettings();
 setTimeout(()=>applyMood('любопытство'), 800);
 setTimeout(()=>applyMood('спокойствие'), 3500);
 setTimeout(()=>applyMood('нейтраль'), 7000);
+// Автозапуск прослушивания
+setTimeout(()=>{ if (cfg.auto && apiKey) startAutoListen(); }, 2000);
 </script>
 </body>
 </html>
