@@ -251,7 +251,7 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 22px;
     <button class="hbtn" onclick="document.getElementById('settings-sheet').classList.add('open')">⚙️</button>
   </header>
 
-  <div id="messages">
+  <div id="messages" onclick="interruptSpeech()">
     <div class="welcome" id="welcome">
       <div class="w-orb">🧠</div>
       <div class="w-title"><span>Привет, Роман!</span></div>
@@ -270,7 +270,7 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 22px;
       <!-- Индикатор микрофона (не кнопка) -->
       <div class="btn" id="mic-indicator">🎙️</div>
       <textarea id="txt" placeholder="Или напиши сообщение..." rows="1"
-        onkeydown="onKey(event)" oninput="resize(this)"></textarea>
+        onkeydown="onKey(event)" oninput="resize(this)" onclick="interruptSpeech()"></textarea>
       <button class="btn" id="send" onclick="send()">↑</button>
     </div>
     <div id="status"></div>
@@ -362,9 +362,11 @@ function updatePitch(v) {
 
 function applySettings() {
   const vBtn = document.getElementById('voice-toggle');
-  vBtn.textContent = cfg.voice ? '🔊' : '🔇';
-  vBtn.className = cfg.voice ? 'hbtn accent' : 'hbtn';
-  if (!cfg.voice) window.speechSynthesis.cancel();
+  if (vBtn) {
+    vBtn.textContent = cfg.voice ? '🔊' : '🔇';
+    vBtn.className = cfg.voice ? 'hbtn accent' : 'hbtn';
+  }
+  if (!cfg.voice && window.speechSynthesis) window.speechSynthesis.cancel();
   const tv = document.getElementById('t-voice');
   if (tv) tv.className = 'toggle' + (cfg.voice ? ' on' : '');
   const ta = document.getElementById('t-auto');
@@ -406,14 +408,28 @@ function notifyResponse() {
   if (cfg.notify==='vibro'||cfg.notify==='both') vibrate([40,30,40,30,80]);
 }
 
-// ══ ГОЛОС ══
+// ══ ГОЛОС И ПРЕРЫВАНИЕ СВЯЗИ ══
+let isSpeakingNow = false;
+
+function interruptSpeech() {
+  if (isSpeakingNow && window.speechSynthesis) {
+    window.speechSynthesis.cancel();
+    isSpeakingNow = false;
+    setStatus('Прервано');
+    setTimeout(() => { if (cfg.auto && !busy && !listening) startAutoListen(); }, 400);
+  }
+}
+
 function speakText(text) {
-  if (!cfg.voice || !window.speechSynthesis) {
-    // Даже без голоса — после ответа снова слушаем
-    setTimeout(() => { if (cfg.auto && !busy) startAutoListen(); }, 600);
+  if (!window.speechSynthesis) return;
+  window.speechSynthesis.cancel();
+  
+  if (!cfg.voice) {
+    isSpeakingNow = false;
+    setTimeout(() => { if (cfg.auto && !busy && !listening) startAutoListen(); }, 600);
     return;
   }
-  window.speechSynthesis.cancel();
+
   const clean = text.replace(/[*_~`#>]/g,'').substring(0, 450);
   const utt = new SpeechSynthesisUtterance(clean);
   utt.lang = 'ru-RU';
@@ -421,27 +437,37 @@ function speakText(text) {
   utt.pitch = cfg.pitch;
   utt.volume = 1.0;
 
-  // Ищем лучший русский голос
   const voices = window.speechSynthesis.getVoices();
   const preferred = ['Google русский','Google Russian','Microsoft Pavel','Milena','Yandex'];
   let best = voices.find(v => preferred.some(p => v.name.includes(p)));
   if (!best) best = voices.find(v => v.lang.startsWith('ru'));
   if (best) utt.voice = best;
 
-  utt.onstart = () => setStatus('🔊 Говорю...');
+  utt.onstart = () => {
+    isSpeakingNow = true;
+    setStatus('🔊 Говорю...');
+  };
+  
   utt.onend = () => {
-    setStatus('');
-    notifyResponse();
-    // После ответа — снова слушаем
-    setTimeout(() => { if (cfg.auto && !busy) startAutoListen(); }, 700);
+    if (isSpeakingNow) {
+      isSpeakingNow = false;
+      setStatus('');
+      notifyResponse();
+      setTimeout(() => { if (cfg.auto && !busy && !listening) startAutoListen(); }, 600);
+    }
   };
+  
   utt.onerror = () => {
+    isSpeakingNow = false;
     setStatus('');
-    setTimeout(() => { if (cfg.auto && !busy) startAutoListen(); }, 700);
+    setTimeout(() => { if (cfg.auto && !busy && !listening) startAutoListen(); }, 600);
   };
+  
   window.speechSynthesis.speak(utt);
 }
-window.speechSynthesis.onvoiceschanged = () => window.speechSynthesis.getVoices();
+if (window.speechSynthesis) {
+  window.speechSynthesis.onvoiceschanged = () => window.speechSynthesis.getVoices();
+}
 
 // ══ API КЛЮЧ ══
 let apiKey='', model='llama-3.1-8b-instant', history=[], busy=false;
@@ -486,6 +512,11 @@ document.querySelectorAll('.m-opt').forEach(el => {
 function initRec() {
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
   if (!SR) return null;
+  
+  if (window.recognitionInstance) {
+    try { window.recognitionInstance.abort(); } catch(e) {}
+  }
+
   const r = new SR();
   r.lang='ru-RU'; r.continuous=false; r.interimResults=true; r.maxAlternatives=1;
   const bar = document.getElementById('voice-bar');
@@ -498,6 +529,7 @@ function initRec() {
     setStatus('Говорите...');
     notifyMicOn();
   };
+  
   r.onresult = e => {
     let interim=''; finalText='';
     for (let i=e.resultIndex; i<e.results.length; i++) {
@@ -507,21 +539,25 @@ function initRec() {
     bar.textContent = '● ' + (finalText||interim||'Слушаю...');
     if (interim) applyMood(detectMood(interim));
   };
+  
   r.onerror = e => {
     if (e.error==='not-allowed') {
       setStatus('⚠️ Разрешите микрофон в настройках');
       cfg.auto = false; saveCfg(); applySettings();
+      stopListening(true);
     } else if (e.error==='no-speech') {
-      // Тихо — просто снова слушаем
       stopListening(false);
-      setTimeout(() => { if (cfg.auto && !busy) startAutoListen(); }, 500);
+      setTimeout(() => { if (cfg.auto && !busy && !isSpeakingNow && !listening) startAutoListen(); }, 500);
     } else {
       setStatus('Ошибка: ' + e.error);
       stopListening(true);
+      setTimeout(() => { if (cfg.auto && !busy && !isSpeakingNow && !listening) startAutoListen(); }, 1000);
     }
   };
+  
   r.onend = () => {
     if (listening) {
+      stopListening(false);
       if (finalText.trim()) {
         document.getElementById('txt').value = finalText.trim();
         resize(document.getElementById('txt'));
@@ -529,33 +565,34 @@ function initRec() {
         send();
       } else {
         bar.classList.remove('on'); setStatus('');
-        // Тишина — снова слушаем
-        setTimeout(() => { if (cfg.auto && !busy) startAutoListen(); }, 500);
+        setTimeout(() => { if (cfg.auto && !busy && !isSpeakingNow && !listening) startAutoListen(); }, 500);
       }
-      stopListening(false);
     }
   };
+  
+  window.recognitionInstance = r;
   return r;
 }
 
 async function startAutoListen() {
-  if (listening || busy) return;
+  if (listening || busy || isSpeakingNow) return;
   try { await navigator.mediaDevices.getUserMedia({audio:true}); } catch(e) {
     setStatus('⚠️ Нет доступа к микрофону'); return;
   }
-  if (!rec) { rec=initRec(); if (!rec) { setStatus('Микрофон не поддерживается'); return; } }
+  rec = initRec();
+  if (!rec) { setStatus('Микрофон не поддерживается'); return; }
   finalText = '';
   try { rec.start(); } catch(e) {
-    rec = initRec();
-    try { rec.start(); } catch(e2) { setStatus('Не удалось запустить микрофон'); }
+    setStatus('Сбой запуска микрофона');
   }
 }
 
 function stopListening(showStatus=true) {
   listening = false;
   const mic = document.getElementById('mic-indicator');
-  mic.classList.remove('on'); mic.textContent = '🎙️';
-  document.getElementById('voice-bar').classList.remove('on');
+  if (mic) { mic.classList.remove('on'); mic.textContent = '🎙️'; }
+  const vBar = document.getElementById('voice-bar');
+  if (vBar) vBar.classList.remove('on');
   if (showStatus) setStatus('');
 }
 
@@ -570,6 +607,7 @@ function getSystemPrompt() {
 }
 
 function useChip(el) {
+  if (window.speechSynthesis) window.speechSynthesis.cancel();
   document.getElementById('txt').value = el.textContent.replace(/^.\s/,'').trim();
   send();
 }
@@ -577,17 +615,29 @@ function onKey(e) { if (e.key==='Enter'&&!e.shiftKey) { e.preventDefault(); send
 function resize(el) { el.style.height='auto'; el.style.height=Math.min(el.scrollHeight,130)+'px'; }
 
 async function send() {
+  if (listening) {
+    try { window.recognitionInstance.abort(); } catch(e){}
+    stopListening(false);
+  }
+  if (window.speechSynthesis) window.speechSynthesis.cancel();
+  
   const inp = document.getElementById('txt');
   const text = inp.value.trim();
   if (!text||busy) return;
+  
   const w = document.getElementById('welcome'); if (w) w.remove();
   applyMood(detectMood(text));
   inp.value=''; resize(inp);
   addMsg('user', text);
+  
   history.push({role:'user', content:text});
   if (history.length > 16) history.splice(0, 2);
-  busy=true; document.getElementById('send').disabled=true; setStatus('Думаю...');
+  
+  busy=true; 
+  document.getElementById('send').disabled=true; 
+  setStatus('Думаю...');
   const t = addTyping();
+  
   try {
     const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
       method:'POST',
@@ -602,19 +652,23 @@ async function send() {
     if (!res.ok) { const err=await res.json(); throw new Error(err.error?.message||'Ошибка API'); }
     const data = await res.json();
     const reply = data.choices[0].message.content;
+    
     history.push({role:'assistant', content:reply});
     applyMood(detectMood(text+' '+reply));
     addMsg('ai', reply);
+    
+    busy=false; 
+    document.getElementById('send').disabled=false;
     speakText(reply);
   } catch(e) {
     t.remove();
     addMsg('ai','⚠️ '+e.message);
     setStatus('Проверь API ключ');
-    busy=false; document.getElementById('send').disabled=false;
-    setTimeout(() => { if (cfg.auto && !busy) startAutoListen(); }, 1000);
+    busy=false; 
+    document.getElementById('send').disabled=false;
+    setTimeout(() => { if (cfg.auto && !busy && !isSpeakingNow && !listening) startAutoListen(); }, 1000);
     return;
   }
-  busy=false; document.getElementById('send').disabled=false;
 }
 
 function addMsg(role, text) {
@@ -646,7 +700,6 @@ applySettings();
 setTimeout(()=>applyMood('любопытство'), 800);
 setTimeout(()=>applyMood('спокойствие'), 3500);
 setTimeout(()=>applyMood('нейтраль'), 7000);
-// Автозапуск прослушивания
 setTimeout(()=>{ if (cfg.auto && apiKey) startAutoListen(); }, 2000);
 </script>
 </body>
