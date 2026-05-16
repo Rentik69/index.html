@@ -74,7 +74,7 @@ header { padding: 18px 16px 12px; border-bottom: 1px solid var(--border); backgr
 #txt:focus { border-color: rgba(123,47,255,0.5); background: var(--s2); }
 #txt::placeholder { color: var(--muted); }
 .btn { width: 54px; height: 54px; border-radius: 16px; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 22px; flex-shrink: 0; transition: all 0.15s; }
-#mic-indicator { background: var(--s1); border: 1px solid var(--border); color: var(--muted); pointer-events: none; }
+#mic-indicator { background: var(--s1); border: 1px solid var(--border); color: var(--muted); pointer-events: auto; cursor: pointer; }
 #mic-indicator.on { background: linear-gradient(135deg, #ff2faa, #ff5050); border: none; color: white; animation: mp 0.8s ease-in-out infinite; }
 @keyframes mp { 0%,100%{box-shadow:0 0 20px rgba(255,47,170,0.4);transform:scale(1)} 50%{box-shadow:0 0 40px rgba(255,47,170,0.7);transform:scale(1.06)} }
 #send { background: linear-gradient(135deg, var(--c1), var(--c2)); color: white; box-shadow: 0 4px 20px rgba(123,47,255,0.35); transition: background 3s ease; }
@@ -127,6 +127,10 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 22px;
 .m-desc { font-size: 12px; color: var(--muted); margin-top: 3px; }
 .danger-btn { width: 100%; padding: 14px; background: rgba(255,50,50,0.1); border: 1px solid rgba(255,50,50,0.3); border-radius: 14px; color: #ff6060; font-family: 'Inter', sans-serif; font-size: 14px; font-weight: 600; cursor: pointer; margin-top: 8px; transition: all 0.2s; }
 .danger-btn:active { background: rgba(255,50,50,0.2); }
+
+.gender-switch { display: flex; background: var(--s2); border-radius: 12px; padding: 4px; gap: 4px; margin-top: 10px; width: 100%; max-width: 320px; }
+.gender-opt { flex: 1; padding: 10px; text-align: center; border-radius: 8px; cursor: pointer; color: var(--muted); font-size: 13px; transition: all 0.2s; border: 1px solid transparent; font-family: 'Inter', sans-serif; font-weight: 500; }
+.gender-opt.sel { background: var(--c1); color: #fff; }
 </style>
 </head>
 <body>
@@ -167,6 +171,14 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 22px;
         <div class="s-desc">Слушает сам после ответа</div>
       </div>
       <div class="toggle on" id="t-auto" onclick="toggleSetting('auto')"></div>
+    </div>
+    <div class="s-row" style="flex-direction:column;align-items:flex-start">
+      <div class="s-label">👤 Пол голоса</div>
+      <div class="s-desc" style="margin-top:4px">Выберите тембр озвучки ответов</div>
+      <div class="gender-switch" id="gender-opts">
+        <div class="gender-opt sel" data-val="female" onclick="selectGender('female')">Женский</div>
+        <div class="gender-opt" data-val="male" onclick="selectGender('male')">Мужской</div>
+      </div>
     </div>
     <div class="s-row" style="flex-direction:column;align-items:flex-start">
       <div class="s-label">🔔 Уведомление при ответе</div>
@@ -397,7 +409,7 @@ function applyMood(mood) {
 }
 
 // ══ НАСТРОЙКИ ══
-const DEF = { voice:true, auto:true, notify:'sound', mic:'vibro', rate:1.0, pitch:1.0, style:'short' };
+const DEF = { voice:true, auto:true, notify:'sound', mic:'vibro', rate:1.0, pitch:1.0, style:'short', gender:'female' };
 let cfg = {};
 try { cfg = JSON.parse(localStorage.getItem('akkord_cfg') || '{}'); } catch(e) {}
 cfg = Object.assign({}, DEF, cfg);
@@ -413,10 +425,15 @@ function toggleSetting(key) {
   }
 }
 
+function selectGender(gender) {
+  cfg.gender = gender;
+  document.querySelectorAll('.gender-opt').forEach(o => o.classList.toggle('sel', o.dataset.val === gender));
+  saveCfg();
+}
+
 // Глобальный триггер первой пользовательской разблокировки медиасистем браузера
 window.addEventListener('click', () => {
   if (!window.speechSynthesis) return;
-  // Снимаем блокировку тихим вызовом
   const unlock = new SpeechSynthesisUtterance("");
   unlock.volume = 0;
   window.speechSynthesis.speak(unlock);
@@ -462,6 +479,11 @@ function applySettings() {
   const ps = document.getElementById('pitch-slider');
   if (rs) { rs.value = cfg.rate; updateRate(cfg.rate); }
   if (ps) { ps.value = cfg.pitch; updatePitch(cfg.pitch); }
+  
+  document.querySelectorAll('.gender-opt').forEach(o => {
+    o.classList.toggle('sel', o.dataset.val === cfg.gender);
+  });
+
   ['notify','mic','style'].forEach(group => {
     document.querySelectorAll(`#${group}-opts .s-opt`).forEach(o => {
       o.classList.toggle('sel', o.dataset.val === cfg[group]);
@@ -486,7 +508,6 @@ function playBeep(freq=880, dur=80) {
 }
 
 function notifyMicOn() {
-  if (cfg.mic==='sound'||cfg.mic==='both') playBeep(880, 80);
   if (cfg.mic==='vibro'||cfg.mic==='both') vibrate([30,20,30]);
 }
 
@@ -525,8 +546,17 @@ function speakText(text) {
   streamUtt.volume = 1.0;
 
   const voices = window.speechSynthesis.getVoices();
-  const preferred = ['Google русский','Google Russian','Microsoft Pavel','Milena','Yandex'];
-  let best = voices.find(v => preferred.some(p => v.name.includes(p)));
+  const maleKeys = ['Pavel', 'Aleksandr', 'Male', 'Dmitry', 'Vitaly'];
+  const femaleKeys = ['Irina', 'Google русский', 'Milena', 'Female', 'Tatyana', 'Alyona'];
+  
+  let best = voices.find(v => {
+    const isRu = v.lang.startsWith('ru');
+    const matchesGender = cfg.gender === 'male' 
+      ? maleKeys.some(k => v.name.includes(k)) 
+      : femaleKeys.some(k => v.name.includes(k));
+    return isRu && matchesGender;
+  });
+  
   if (!best) best = voices.find(v => v.lang.startsWith('ru'));
   if (best) streamUtt.voice = best;
 
@@ -599,7 +629,7 @@ document.querySelectorAll('.m-opt').forEach(el => {
   });
 });
 
-// ══ ХИРУРГИЧЕСКИ ОПТИМИЗИРОВАННЫЙ МИКРОФОН ══
+// ══ МИКРОФОН ══
 function initRec() {
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
   if (!SR) return null;
@@ -646,7 +676,6 @@ function initRec() {
       setStatus('⚠️ Разрешите микрофон в настройках');
       cfg.auto = false; saveCfg(); applySettings();
     } else {
-      // Автоматический рестарт при тишине или сбоях связи
       setTimeout(() => { if (cfg.auto && !busy && !isSpeakingNow && !listening) startAutoListen(); }, 400);
     }
   };
@@ -674,6 +703,26 @@ function initRec() {
   return r;
 }
 
+async function startManualListen() {
+  if (busy || isSpeakingNow || !apiKey) return;
+  rec = initRec();
+  if (!rec) { setStatus('Микрофон не поддерживается'); return; }
+  finalText = '';
+  try { 
+    rec.start(); 
+  } catch(e) {
+    console.error("Ошибка ручного старта:", e);
+  }
+}
+
+document.getElementById('mic-indicator').onclick = () => {
+  if (listening) {
+    stopListening();
+  } else {
+    startManualListen();
+  }
+};
+
 async function startAutoListen() {
   if (listening || busy || isSpeakingNow || !apiKey) return;
   rec = initRec();
@@ -686,6 +735,9 @@ async function startAutoListen() {
 
 function stopListening(showStatus=true) {
   listening = false;
+  if (window.recognitionInstance) {
+    try { window.recognitionInstance.abort(); } catch(e){}
+  }
   const mic = document.getElementById('mic-indicator');
   if (mic) { mic.classList.remove('on'); mic.textContent = '🎙️'; }
   const vBar = document.getElementById('voice-bar');
@@ -784,7 +836,7 @@ function addMsgToDOM(role, text) {
 function addTyping() {
   const msgs = document.getElementById('messages');
   const d = document.createElement('div'); d.className='msg ai';
-  const who = document.createElement('div'); who.className='msg-who'; who.textContent='Аккорд';
+  const who = document.createElement('div'); who.textContent='Аккорд'; who.className='msg-who';
   const t = document.createElement('div'); t.className='typing-wrap';
   t.innerHTML='<span></span><span></span><span></span>';
   d.appendChild(who); d.appendChild(t); msgs.appendChild(d);
