@@ -29,13 +29,13 @@ html, body { height: 100%; width: 100%; background: var(--bg); color: var(--text
 #mood-bar { position: fixed; top: 0; left: 0; right: 0; height: 3px; background: linear-gradient(90deg, var(--c1), var(--c2), var(--c3)); z-index: 50; transition: all 3s ease; }
 #app { display: flex; flex-direction: column; height: 100%; position: relative; z-index: 1; }
 header { padding: 18px 16px 12px; border-bottom: 1px solid var(--border); background: rgba(8,8,15,0.85); backdrop-filter: blur(20px); display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
-.avatar { width: 44px; height: 44px; border-radius: 14px; background: linear-gradient(135deg, var(--c1), var(--c2)); display: flex; align-items: center; justify-content: center; font-size: 22px; flex-shrink: 0; animation: ap 3s ease-in-out infinite; }
+.avatar { width: 44px; height: 44px; border-radius: 14px; background: linear-gradient(135deg, var(--c1), var(--c2)); display: flex; align-items: center; justify-content: center; font-size: 22px; flex-shrink: 0; animation: ap 3s ease-in-out infinite; transition: background 3s ease; }
 @keyframes ap { 0%,100%{box-shadow:0 0 15px rgba(123,47,255,0.3)} 50%{box-shadow:0 0 30px rgba(0,229,255,0.5)} }
 .hinfo { flex: 1; min-width: 0; }
 .hinfo h1 { font-family: 'Unbounded', sans-serif; font-size: 15px; font-weight: 900; color: #fff; }
 #mood-label { font-size: 11px; color: var(--muted); margin-top: 2px; transition: color 2s ease; }
 .hbtn { min-width: 44px; height: 44px; border-radius: 12px; border: 1px solid var(--border); background: rgba(255,255,255,0.05); color: var(--muted); cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s; flex-shrink: 0; font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 700; padding: 0 10px; }
-.hbtn:active { background: rgba(255,255,255,0.14); color: #fff; }
+.hbtn:active { background: rgba(255,255,255,0.14); color: #fff; transform: scale(0.93); }
 .hbtn.accent { color: var(--c2); border-color: rgba(0,229,255,0.3); }
 #messages { flex: 1; overflow-y: auto; overflow-x: hidden; padding: 16px 14px 8px; display: flex; flex-direction: column; gap: 16px; scroll-behavior: smooth; -webkit-overflow-scrolling: touch; }
 #messages::-webkit-scrollbar { display: none; }
@@ -92,11 +92,29 @@ header { padding: 18px 16px 12px; border-bottom: 1px solid var(--border); backgr
 .card-btn:active { opacity: 0.8; }
 .card-note { margin-top: 14px; font-size: 12px; color: var(--muted); text-align: center; }
 .card-note a { color: var(--c2); text-decoration: none; }
-#model-sheet { position: fixed; inset: 0; z-index: 100; background: rgba(4,4,12,0.96); backdrop-filter: blur(20px); display: none; align-items: flex-end; justify-content: center; }
-#model-sheet.open { display: flex; }
-.sheet-box { background: var(--s1); border: 1px solid var(--border); border-radius: 22px 22px 0 0; padding: 22px 18px 36px; width: 100%; animation: su 0.3s ease; }
+#settings-sheet { position: fixed; inset: 0; z-index: 100; background: rgba(4,4,12,0.96); backdrop-filter: blur(20px); display: none; align-items: flex-end; justify-content: center; }
+#settings-sheet.open { display: flex; }
+.sheet-box { background: var(--s1); border: 1px solid var(--border); border-radius: 22px 22px 0 0; padding: 24px 18px 36px; width: 100%; animation: su 0.3s ease; max-height: 85vh; overflow-y: auto; }
 @keyframes su { from{transform:translateY(100%)} to{transform:translateY(0)} }
-.sheet-box h3 { font-family:'Unbounded',sans-serif; font-size:11px; font-weight:700; margin-bottom:16px; color:var(--muted); letter-spacing:0.12em; }
+.sheet-title { font-family:'Unbounded',sans-serif; font-size:13px; font-weight:900; margin-bottom:20px; color:#fff; }
+.s-row { display: flex; align-items: center; justify-content: space-between; padding: 16px 0; border-bottom: 1px solid var(--border); min-height: 62px; }
+.s-row:last-child { border-bottom: none; }
+.s-info { flex: 1; }
+.s-label { font-size: 15px; color: #fff; font-weight: 600; }
+.s-desc { font-size: 12px; color: var(--muted); margin-top: 3px; }
+.toggle { width: 52px; height: 30px; border-radius: 15px; background: var(--s2); border: 1px solid var(--border); position: relative; cursor: pointer; transition: all 0.3s; flex-shrink: 0; }
+.toggle.on { background: var(--c2); border-color: var(--c2); box-shadow: 0 0 12px rgba(0,229,255,0.4); }
+.toggle::after { content:''; position: absolute; width: 22px; height: 22px; border-radius: 50%; background: #fff; top: 3px; left: 3px; transition: all 0.3s; box-shadow: 0 2px 6px rgba(0,0,0,0.3); }
+.toggle.on::after { left: 26px; }
+.s-slider { width: 100%; margin-top: 10px; }
+input[type=range] { width: 100%; -webkit-appearance: none; height: 4px; border-radius: 2px; background: var(--s2); outline: none; }
+input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 22px; height: 22px; border-radius: 50%; background: var(--c2); cursor: pointer; box-shadow: 0 0 8px rgba(0,229,255,0.4); }
+.s-options { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
+.s-opt { padding: 8px 14px; border-radius: 10px; border: 1px solid var(--border); background: var(--s2); color: var(--muted); font-size: 13px; cursor: pointer; transition: all 0.2s; font-family: 'Inter', sans-serif; }
+.s-opt.sel { background: rgba(0,229,255,0.1); border-color: var(--c2); color: var(--c2); }
+.s-opt:active { transform: scale(0.95); }
+#model-sheet { position: fixed; inset: 0; z-index: 101; background: rgba(4,4,12,0.96); backdrop-filter: blur(20px); display: none; align-items: flex-end; justify-content: center; }
+#model-sheet.open { display: flex; }
 .m-opt { padding: 16px; border-radius: 14px; cursor: pointer; transition: all 0.15s; margin-bottom: 8px; display: flex; align-items: center; gap: 14px; min-height: 62px; }
 .m-opt:active { background: var(--s2); }
 .m-opt.sel { background: rgba(0,229,255,0.07); border: 1px solid rgba(0,229,255,0.25); }
@@ -104,6 +122,8 @@ header { padding: 18px 16px 12px; border-bottom: 1px solid var(--border); backgr
 .m-opt.sel .m-dot { background: var(--c2); box-shadow: 0 0 10px var(--c2); }
 .m-name { font-size: 15px; color: #fff; font-weight: 600; }
 .m-desc { font-size: 12px; color: var(--muted); margin-top: 3px; }
+.danger-btn { width: 100%; padding: 14px; background: rgba(255,50,50,0.1); border: 1px solid rgba(255,50,50,0.3); border-radius: 14px; color: #ff6060; font-family: 'Inter', sans-serif; font-size: 14px; font-weight: 600; cursor: pointer; margin-top: 8px; transition: all 0.2s; }
+.danger-btn:active { background: rgba(255,50,50,0.2); }
 </style>
 </head>
 <body>
@@ -112,6 +132,7 @@ header { padding: 18px 16px 12px; border-bottom: 1px solid var(--border); backgr
 <div class="blob b3"></div>
 <div id="mood-bar"></div>
 
+<!-- Ключ -->
 <div class="overlay" id="key-modal">
   <div class="card">
     <div class="card-icon">⚡</div>
@@ -123,28 +144,111 @@ header { padding: 18px 16px 12px; border-bottom: 1px solid var(--border); backgr
   </div>
 </div>
 
+<!-- Настройки -->
+<div id="settings-sheet" onclick="if(event.target===this)this.classList.remove('open')">
+  <div class="sheet-box">
+    <div class="sheet-title">⚙️ НАСТРОЙКИ</div>
+
+    <!-- Голосовые ответы -->
+    <div class="s-row">
+      <div class="s-info">
+        <div class="s-label">🔊 Голосовые ответы</div>
+        <div class="s-desc">Аккорд отвечает голосом</div>
+      </div>
+      <div class="toggle on" id="t-voice" onclick="toggleSetting('voice')"></div>
+    </div>
+
+    <!-- Уведомление при ответе -->
+    <div class="s-row" style="flex-direction:column;align-items:flex-start">
+      <div class="s-label">🔔 Уведомление при ответе</div>
+      <div class="s-desc" style="margin-top:4px">Как уведомить когда Аккорд ответил</div>
+      <div class="s-options" id="notify-opts">
+        <div class="s-opt sel" data-val="sound" onclick="selectOpt('notify',this)">🔉 Звук</div>
+        <div class="s-opt" data-val="vibro" onclick="selectOpt('notify',this)">📳 Вибро</div>
+        <div class="s-opt" data-val="both" onclick="selectOpt('notify',this)">Оба</div>
+        <div class="s-opt" data-val="none" onclick="selectOpt('notify',this)">Тихо</div>
+      </div>
+    </div>
+
+    <!-- Уведомление при активации микрофона -->
+    <div class="s-row" style="flex-direction:column;align-items:flex-start">
+      <div class="s-label">🎙️ Активация микрофона</div>
+      <div class="s-desc" style="margin-top:4px">Сигнал когда микрофон включился</div>
+      <div class="s-options" id="mic-opts">
+        <div class="s-opt" data-val="sound" onclick="selectOpt('mic',this)">🔉 Звук</div>
+        <div class="s-opt sel" data-val="vibro" onclick="selectOpt('mic',this)">📳 Вибро</div>
+        <div class="s-opt" data-val="both" onclick="selectOpt('mic',this)">Оба</div>
+        <div class="s-opt" data-val="none" onclick="selectOpt('mic',this)">Тихо</div>
+      </div>
+    </div>
+
+    <!-- Скорость речи -->
+    <div class="s-row" style="flex-direction:column;align-items:flex-start">
+      <div class="s-label">🗣️ Скорость речи</div>
+      <div class="s-desc" style="margin-top:4px" id="rate-label">Нормальная (1.0)</div>
+      <div class="s-slider">
+        <input type="range" min="0.7" max="1.6" step="0.1" value="1.0" id="rate-slider" oninput="updateRate(this.value)">
+      </div>
+    </div>
+
+    <!-- Тон голоса -->
+    <div class="s-row" style="flex-direction:column;align-items:flex-start">
+      <div class="s-label">🎵 Тон голоса</div>
+      <div class="s-desc" style="margin-top:4px" id="pitch-label">Нормальный (1.0)</div>
+      <div class="s-slider">
+        <input type="range" min="0.5" max="1.8" step="0.1" value="1.0" id="pitch-slider" oninput="updatePitch(this.value)">
+      </div>
+    </div>
+
+    <!-- Модель -->
+    <div class="s-row">
+      <div class="s-info">
+        <div class="s-label">🤖 Модель ИИ</div>
+        <div class="s-desc" id="model-desc">Llama 3.1 8B — быстрая</div>
+      </div>
+      <div class="s-opt sel" onclick="document.getElementById('model-sheet').classList.add('open')" style="margin:0" id="model-badge">8B⚡</div>
+    </div>
+
+    <!-- Стиль общения -->
+    <div class="s-row" style="flex-direction:column;align-items:flex-start">
+      <div class="s-label">💬 Стиль общения</div>
+      <div class="s-desc" style="margin-top:4px">Как отвечает Аккорд</div>
+      <div class="s-options" id="style-opts">
+        <div class="s-opt sel" data-val="short" onclick="selectOpt('style',this)">Кратко</div>
+        <div class="s-opt" data-val="normal" onclick="selectOpt('style',this)">Нормально</div>
+        <div class="s-opt" data-val="detail" onclick="selectOpt('style',this)">Подробно</div>
+      </div>
+    </div>
+
+    <!-- Сбросить ключ -->
+    <button class="danger-btn" onclick="if(confirm('Забыть API ключ?'))forgetKey()">🔑 Сменить API ключ</button>
+  </div>
+</div>
+
+<!-- Выбор модели -->
 <div id="model-sheet" onclick="if(event.target===this)this.classList.remove('open')">
   <div class="sheet-box">
-    <h3>ВЫБЕРИ МОДЕЛЬ</h3>
-    <div class="m-opt sel" data-model="llama-3.1-8b-instant">
+    <div class="sheet-title">🤖 ВЫБЕРИ МОДЕЛЬ</div>
+    <div class="m-opt sel" data-model="llama-3.1-8b-instant" data-label="8B⚡" data-desc="Llama 3.1 8B — быстрая">
       <div class="m-dot"></div>
       <div><div class="m-name">Llama 3.1 8B ⚡</div><div class="m-desc">Максимально быстрый · Рекомендую</div></div>
     </div>
-    <div class="m-opt" data-model="llama-3.3-70b-versatile">
+    <div class="m-opt" data-model="llama-3.3-70b-versatile" data-label="70B" data-desc="Llama 3.3 70B — умная">
       <div class="m-dot"></div>
       <div><div class="m-name">Llama 3.3 70B</div><div class="m-desc">Умнее · Чуть медленнее</div></div>
     </div>
-    <div class="m-opt" data-model="mixtral-8x7b-32768">
+    <div class="m-opt" data-model="mixtral-8x7b-32768" data-label="MX" data-desc="Mixtral — длинный контекст">
       <div class="m-dot"></div>
-      <div><div class="m-name">Mixtral 8x7B</div><div class="m-desc">Длинный контекст</div></div>
+      <div><div class="m-name">Mixtral 8x7B</div><div class="m-desc">Длинный контекст · 32K</div></div>
     </div>
-    <div class="m-opt" data-model="gemma2-9b-it">
+    <div class="m-opt" data-model="gemma2-9b-it" data-label="GEM" data-desc="Gemma 2 — от Google">
       <div class="m-dot"></div>
-      <div><div class="m-name">Gemma 2 9B</div><div class="m-desc">От Google</div></div>
+      <div><div class="m-name">Gemma 2 9B</div><div class="m-desc">От Google · Быстрый</div></div>
     </div>
   </div>
 </div>
 
+<!-- Приложение -->
 <div id="app">
   <header>
     <div class="avatar">🤖</div>
@@ -152,9 +256,8 @@ header { padding: 18px 16px 12px; border-bottom: 1px solid var(--border); backgr
       <h1>АККОРД</h1>
       <div id="mood-label">Готов к разговору</div>
     </div>
-    <button class="hbtn accent" id="voice-toggle" onclick="toggleVoice()">🔊</button>
-    <button class="hbtn" id="model-label" onclick="document.getElementById('model-sheet').classList.add('open')">8B⚡</button>
-    <button class="hbtn" onclick="if(confirm('Забыть ключ?'))forgetKey()">🔑</button>
+    <button class="hbtn accent" id="voice-toggle" onclick="toggleSetting('voice')">🔊</button>
+    <button class="hbtn" onclick="document.getElementById('settings-sheet').classList.add('open')">⚙️</button>
   </header>
 
   <div id="messages">
@@ -182,6 +285,7 @@ header { padding: 18px 16px 12px; border-bottom: 1px solid var(--border); backgr
   </div>
 </div>
 <script>
+// ══ НАСТРОЕНИЯ ══
 const MOODS = {
   радость:     {c1:'#ffcc00',c2:'#ff8800',c3:'#ff4400',label:'😄 Радостное',speed:'4s'},
   грусть:      {c1:'#4488ff',c2:'#2255cc',c3:'#8888ff',label:'😔 Задумчивое',speed:'10s'},
@@ -226,8 +330,131 @@ function applyMood(mood) {
   document.getElementById('mood-label').textContent = m.label;
 }
 
-let apiKey='', model='llama-3.1-8b-instant', history=[], busy=false;
-let rec=null, listening=false, finalText='', voiceOn=true;
+// ══ НАСТРОЙКИ ══
+const DEF = {
+  voice: true, notify: 'sound', mic: 'vibro',
+  rate: 1.0, pitch: 1.0, style: 'short'
+};
+let cfg = {};
+try { cfg = JSON.parse(localStorage.getItem('akkord_cfg') || '{}'); } catch(e) {}
+cfg = Object.assign({}, DEF, cfg);
+
+function saveCfg() {
+  try { localStorage.setItem('akkord_cfg', JSON.stringify(cfg)); } catch(e) {}
+}
+
+function toggleSetting(key) {
+  cfg[key] = !cfg[key];
+  saveCfg();
+  applySettings();
+}
+
+function selectOpt(group, el) {
+  const parent = el.closest('.s-options') || document.getElementById(group+'-opts');
+  parent.querySelectorAll('.s-opt').forEach(o => o.classList.remove('sel'));
+  el.classList.add('sel');
+  cfg[group] = el.dataset.val;
+  saveCfg();
+}
+
+function updateRate(v) {
+  cfg.rate = parseFloat(v);
+  const labels = {0.7:'Медленная',0.8:'Медленная',0.9:'Чуть медленнее',1.0:'Нормальная',1.1:'Чуть быстрее',1.2:'Быстрая',1.3:'Быстрая',1.4:'Очень быстрая',1.5:'Очень быстрая',1.6:'Максимальная'};
+  document.getElementById('rate-label').textContent = (labels[v]||'Нормальная') + ' (' + v + ')';
+  saveCfg();
+}
+
+function updatePitch(v) {
+  cfg.pitch = parseFloat(v);
+  const labels = {0.5:'Очень низкий',0.6:'Низкий',0.7:'Низкий',0.8:'Чуть ниже',0.9:'Чуть ниже',1.0:'Нормальный',1.1:'Чуть выше',1.2:'Выше',1.3:'Высокий',1.4:'Высокий',1.5:'Очень высокий',1.6:'Очень высокий',1.7:'Максимальный',1.8:'Максимальный'};
+  document.getElementById('pitch-label').textContent = (labels[v]||'Нормальный') + ' (' + v + ')';
+  saveCfg();
+}
+
+function applySettings() {
+  // Кнопка голоса в шапке
+  const vBtn = document.getElementById('voice-toggle');
+  vBtn.textContent = cfg.voice ? '🔊' : '🔇';
+  vBtn.className = cfg.voice ? 'hbtn accent' : 'hbtn';
+  if (!cfg.voice) window.speechSynthesis.cancel();
+
+  // Тоггл в настройках
+  const t = document.getElementById('t-voice');
+  if (t) { t.className = 'toggle' + (cfg.voice ? ' on' : ''); }
+
+  // Слайдеры
+  const rs = document.getElementById('rate-slider');
+  const ps = document.getElementById('pitch-slider');
+  if (rs) { rs.value = cfg.rate; updateRate(cfg.rate); }
+  if (ps) { ps.value = cfg.pitch; updatePitch(cfg.pitch); }
+
+  // Опции уведомлений
+  ['notify','mic','style'].forEach(group => {
+    const opts = document.querySelectorAll(`#${group}-opts .s-opt`);
+    opts.forEach(o => { o.classList.toggle('sel', o.dataset.val === cfg[group]); });
+  });
+}
+
+// ══ ВИБРАЦИЯ ══
+function vibrate(pattern) {
+  if (navigator.vibrate) navigator.vibrate(pattern);
+}
+
+// ══ ЗВУК АКТИВАЦИИ ══
+function playBeep(freq = 880, dur = 80) {
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain); gain.connect(ctx.destination);
+    osc.frequency.value = freq;
+    osc.type = 'sine';
+    gain.gain.setValueAtTime(0.3, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + dur/1000);
+    osc.start(ctx.currentTime);
+    osc.stop(ctx.currentTime + dur/1000);
+  } catch(e) {}
+}
+
+function notifyMicOn() {
+  if (cfg.mic === 'sound' || cfg.mic === 'both') playBeep(880, 80);
+  if (cfg.mic === 'vibro' || cfg.mic === 'both') vibrate([30, 20, 30]);
+}
+
+function notifyResponse() {
+  if (cfg.notify === 'sound' || cfg.notify === 'both') playBeep(660, 120);
+  if (cfg.notify === 'vibro' || cfg.notify === 'both') vibrate([40, 30, 40, 30, 80]);
+}
+
+// ══ ГОЛОС ══
+function speakText(text) {
+  if (!cfg.voice || !window.speechSynthesis) return;
+  window.speechSynthesis.cancel();
+  const clean = text.replace(/[*_~`#>]/g,'').substring(0, 450);
+  const utt = new SpeechSynthesisUtterance(clean);
+  utt.lang = 'ru-RU';
+  utt.rate = cfg.rate;
+  utt.pitch = cfg.pitch;
+  utt.volume = 1.0;
+
+  // Ищем лучший русский голос
+  const voices = window.speechSynthesis.getVoices();
+  const preferred = ['Google русский','Google Russian','Microsoft Pavel','Milena','Yandex'];
+  let best = voices.find(v => preferred.some(p => v.name.includes(p)));
+  if (!best) best = voices.find(v => v.lang.startsWith('ru'));
+  if (best) utt.voice = best;
+
+  utt.onstart = () => setStatus('🔊 Говорю...');
+  utt.onend = () => { setStatus(''); notifyResponse(); };
+  utt.onerror = () => setStatus('');
+  window.speechSynthesis.speak(utt);
+}
+window.speechSynthesis.onvoiceschanged = () => window.speechSynthesis.getVoices();
+
+// ══ API КЛЮЧ ══
+let apiKey = '', model = 'llama-3.1-8b-instant';
+let history = [], busy = false;
+let rec = null, listening = false, finalText = '';
 
 function saveKey() {
   const v = document.getElementById('key-input').value.trim();
@@ -239,127 +466,173 @@ function saveKey() {
 }
 function forgetKey() {
   try { localStorage.removeItem('akkord_key'); } catch(e) {}
-  apiKey = ''; document.getElementById('key-modal').style.display = 'flex';
+  apiKey = '';
+  document.getElementById('key-modal').style.display = 'flex';
+  document.getElementById('settings-sheet').classList.remove('open');
 }
 document.getElementById('key-input').addEventListener('keydown', e => { if (e.key==='Enter') saveKey(); });
-try { const sk=localStorage.getItem('akkord_key'); if (sk&&sk.startsWith('gsk_')) { apiKey=sk; document.getElementById('key-modal').style.display='none'; } } catch(e) {}
+try {
+  const sk = localStorage.getItem('akkord_key');
+  if (sk && sk.startsWith('gsk_')) { apiKey=sk; document.getElementById('key-modal').style.display='none'; }
+} catch(e) {}
 
+// ══ МОДЕЛЬ ══
 document.querySelectorAll('.m-opt').forEach(el => {
   el.addEventListener('click', () => {
     model = el.dataset.model;
     document.querySelectorAll('.m-opt').forEach(o => o.classList.remove('sel'));
     el.classList.add('sel');
-    const n = el.querySelector('.m-name').textContent;
-    document.getElementById('model-label').textContent = n.includes('8B')?'8B⚡':n.includes('70B')?'70B':n.includes('Mixtral')?'MX':'GEM';
+    document.getElementById('model-badge').textContent = el.dataset.label;
+    document.getElementById('model-desc').textContent = el.dataset.desc;
     document.getElementById('model-sheet').classList.remove('open');
   });
 });
 
+// ══ МИКРОФОН ══
 function initRec() {
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
   if (!SR) return null;
   const r = new SR();
   r.lang='ru-RU'; r.continuous=false; r.interimResults=true; r.maxAlternatives=1;
   const bar = document.getElementById('voice-bar');
-  r.onstart = () => { listening=true; document.getElementById('mic').classList.add('on'); document.getElementById('mic').textContent='⏹️'; bar.classList.add('on'); bar.textContent='● Слушаю...'; setStatus('Говорите...'); };
+
+  r.onstart = () => {
+    listening = true;
+    document.getElementById('mic').classList.add('on');
+    document.getElementById('mic').textContent = '⏹️';
+    bar.classList.add('on'); bar.textContent = '● Слушаю...';
+    setStatus('Говорите...');
+    notifyMicOn();
+  };
   r.onresult = e => {
     let interim=''; finalText='';
-    for (let i=e.resultIndex; i<e.results.length; i++) { if (e.results[i].isFinal) finalText+=e.results[i][0].transcript; else interim+=e.results[i][0].transcript; }
-    bar.textContent='● '+(finalText||interim||'Слушаю...');
+    for (let i=e.resultIndex; i<e.results.length; i++) {
+      if (e.results[i].isFinal) finalText += e.results[i][0].transcript;
+      else interim += e.results[i][0].transcript;
+    }
+    bar.textContent = '● ' + (finalText || interim || 'Слушаю...');
     if (interim) applyMood(detectMood(interim));
   };
-  r.onerror = e => { if (e.error==='not-allowed') setStatus('⚠️ Разрешите микрофон в настройках'); else if (e.error==='no-speech') setStatus('Не услышал — попробуйте ещё'); else setStatus('Ошибка: '+e.error); stopMic(true); };
-  r.onend = () => { if (listening) { if (finalText.trim()) { document.getElementById('txt').value=finalText.trim(); resize(document.getElementById('txt')); setTimeout(()=>bar.classList.remove('on'),500); send(); } else { bar.classList.remove('on'); setStatus(''); } stopMic(false); } };
+  r.onerror = e => {
+    if (e.error==='not-allowed') setStatus('⚠️ Разрешите микрофон в настройках');
+    else if (e.error==='no-speech') setStatus('Не услышал — попробуйте ещё');
+    else setStatus('Ошибка: ' + e.error);
+    stopMic(true);
+  };
+  r.onend = () => {
+    if (listening) {
+      if (finalText.trim()) {
+        document.getElementById('txt').value = finalText.trim();
+        resize(document.getElementById('txt'));
+        setTimeout(() => bar.classList.remove('on'), 500);
+        send();
+      } else { bar.classList.remove('on'); setStatus(''); }
+      stopMic(false);
+    }
+  };
   return r;
 }
 
 async function toggleMic() {
   if (listening) { if (rec) rec.stop(); stopMic(true); return; }
-  try { await navigator.mediaDevices.getUserMedia({audio:true}); } catch(e) { setStatus('⚠️ Нет доступа к микрофону'); return; }
+  try { await navigator.mediaDevices.getUserMedia({audio:true}); } catch(e) {
+    setStatus('⚠️ Нет доступа к микрофону'); return;
+  }
   if (!rec) { rec=initRec(); if (!rec) { setStatus('Микрофон не поддерживается'); return; } }
   finalText='';
-  try { rec.start(); } catch(e) { rec=initRec(); try { rec.start(); } catch(e2) { setStatus('Не удалось запустить микрофон'); } }
+  try { rec.start(); } catch(e) { rec=initRec(); try { rec.start(); } catch(e2) { setStatus('Не удалось запустить'); } }
 }
-function stopMic(manual=true) { listening=false; document.getElementById('mic').classList.remove('on'); document.getElementById('mic').textContent='🎙️'; if (manual) { document.getElementById('voice-bar').classList.remove('on'); setStatus(''); } }
+function stopMic(manual=true) {
+  listening=false;
+  document.getElementById('mic').classList.remove('on');
+  document.getElementById('mic').textContent='🎙️';
+  if (manual) { document.getElementById('voice-bar').classList.remove('on'); setStatus(''); }
+}
 
-function speakText(text) {
-  if (!voiceOn||!window.speechSynthesis) return;
-  window.speechSynthesis.cancel();
-  const clean = text.replace(/[*_~`#>]/g,'').substring(0,400);
-  const utt = new SpeechSynthesisUtterance(clean);
-  utt.lang='ru-RU'; utt.rate=1.05; utt.pitch=1.0; utt.volume=1.0;
-  const voices = window.speechSynthesis.getVoices();
-  const ru = voices.find(v=>v.lang.startsWith('ru'));
-  if (ru) utt.voice=ru;
-  utt.onstart=()=>setStatus('🔊 Говорю...'); utt.onend=()=>setStatus(''); utt.onerror=()=>setStatus('');
-  window.speechSynthesis.speak(utt);
+// ══ ЧАТ ══
+function getSystemPrompt() {
+  const styles = {
+    short:  'Отвечай кратко — 1-2 предложения. Только суть.',
+    normal: 'Отвечай естественно — 2-4 предложения.',
+    detail: 'Отвечай подробно и развёрнуто.'
+  };
+  return `Ты Аккорд — умный, живой и дружелюбный личный ассистент Романа. Говори по-русски, как настоящий человек — тепло, естественно, без канцелярщины. Чувствуй настроение собеседника и подстраивайся. ${styles[cfg.style]||styles.short} Эмодзи используй умеренно.`;
 }
-function toggleVoice() {
-  voiceOn=!voiceOn;
-  const btn=document.getElementById('voice-toggle');
-  btn.textContent=voiceOn?'🔊':'🔇'; btn.style.opacity=voiceOn?'1':'0.5';
-  if (!voiceOn) window.speechSynthesis.cancel();
-  setStatus(voiceOn?'🔊 Голос включён':'🔇 Голос выключен'); setTimeout(()=>setStatus(''),2000);
-}
-window.speechSynthesis.onvoiceschanged=()=>window.speechSynthesis.getVoices();
 
-function useChip(el) { document.getElementById('txt').value=el.textContent.replace(/^.\s/,'').trim(); send(); }
-function onKey(e) { if (e.key==='Enter'&&!e.shiftKey) { e.preventDefault(); send(); } }
+function useChip(el) {
+  document.getElementById('txt').value = el.textContent.replace(/^.\s/,'').trim();
+  send();
+}
+function onKey(e) { if (e.key==='Enter' && !e.shiftKey) { e.preventDefault(); send(); } }
 function resize(el) { el.style.height='auto'; el.style.height=Math.min(el.scrollHeight,130)+'px'; }
 
 async function send() {
-  const inp=document.getElementById('txt');
-  const text=inp.value.trim();
-  if (!text||busy) return;
-  const w=document.getElementById('welcome'); if (w) w.remove();
+  const inp = document.getElementById('txt');
+  const text = inp.value.trim();
+  if (!text || busy) return;
+  const w = document.getElementById('welcome'); if (w) w.remove();
   applyMood(detectMood(text));
   inp.value=''; resize(inp);
-  addMsg('user',text);
-  history.push({role:'user',content:text});
+  addMsg('user', text);
+  history.push({role:'user', content:text});
+  // Лимит истории — экономим токены
+  if (history.length > 16) history.splice(0, 2);
   busy=true; document.getElementById('send').disabled=true; setStatus('Думаю...');
-  const t=addTyping();
+  const t = addTyping();
   try {
-    const res=await fetch('https://api.groq.com/openai/v1/chat/completions',{
+    const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
       method:'POST',
       headers:{'Content-Type':'application/json','Authorization':'Bearer '+apiKey},
-      body:JSON.stringify({model,max_tokens:600,messages:[
-        {role:'system',content:'Ты умный и дружелюбный ассистент по имени Аккорд. Всегда отвечай на русском языке. Чувствуй настроение собеседника. Будь кратким — 2-3 предложения если не просят подробно. Эмодзи используй умеренно.'},
-        ...history
-      ]})
+      body:JSON.stringify({
+        model,
+        max_tokens: cfg.style==='detail' ? 800 : cfg.style==='normal' ? 500 : 300,
+        temperature: 0.85,
+        messages:[{role:'system', content:getSystemPrompt()}, ...history]
+      })
     });
     t.remove();
     if (!res.ok) { const err=await res.json(); throw new Error(err.error?.message||'Ошибка API'); }
-    const data=await res.json();
-    const reply=data.choices[0].message.content;
-    history.push({role:'assistant',content:reply});
+    const data = await res.json();
+    const reply = data.choices[0].message.content;
+    history.push({role:'assistant', content:reply});
     applyMood(detectMood(text+' '+reply));
-    addMsg('ai',reply);
+    addMsg('ai', reply);
     speakText(reply);
-  } catch(e) { t.remove(); addMsg('ai','⚠️ '+e.message); setStatus('Проверь API ключ'); }
+  } catch(e) {
+    t.remove();
+    addMsg('ai','⚠️ '+e.message);
+    setStatus('Проверь API ключ');
+  }
   busy=false; document.getElementById('send').disabled=false;
 }
 
-function addMsg(role,text) {
-  const msgs=document.getElementById('messages');
-  const d=document.createElement('div'); d.className='msg '+role;
-  const who=document.createElement('div'); who.className='msg-who'; who.textContent=role==='user'?'Вы':'Аккорд';
-  const b=document.createElement('div'); b.className='bubble'; b.textContent=text;
-  d.appendChild(who); d.appendChild(b); msgs.appendChild(d); msgs.scrollTop=msgs.scrollHeight;
+function addMsg(role, text) {
+  const msgs = document.getElementById('messages');
+  const d = document.createElement('div'); d.className='msg '+role;
+  const who = document.createElement('div'); who.className='msg-who';
+  who.textContent = role==='user' ? 'Вы' : 'Аккорд';
+  const b = document.createElement('div'); b.className='bubble'; b.textContent=text;
+  d.appendChild(who); d.appendChild(b); msgs.appendChild(d);
+  msgs.scrollTop = msgs.scrollHeight;
   return d;
 }
 function addTyping() {
-  const msgs=document.getElementById('messages');
-  const d=document.createElement('div'); d.className='msg ai';
-  const who=document.createElement('div'); who.className='msg-who'; who.textContent='Аккорд';
-  const t=document.createElement('div'); t.className='typing-wrap'; t.innerHTML='<span></span><span></span><span></span>';
-  d.appendChild(who); d.appendChild(t); msgs.appendChild(d); msgs.scrollTop=msgs.scrollHeight;
+  const msgs = document.getElementById('messages');
+  const d = document.createElement('div'); d.className='msg ai';
+  const who = document.createElement('div'); who.className='msg-who'; who.textContent='Аккорд';
+  const t = document.createElement('div'); t.className='typing-wrap';
+  t.innerHTML='<span></span><span></span><span></span>';
+  d.appendChild(who); d.appendChild(t); msgs.appendChild(d);
+  msgs.scrollTop = msgs.scrollHeight;
   return d;
 }
 function setStatus(m) { document.getElementById('status').textContent=m; }
 
-setTimeout(()=>applyMood('любопытство'),800);
-setTimeout(()=>applyMood('спокойствие'),3500);
-setTimeout(()=>applyMood('нейтраль'),7000);
+// ══ СТАРТ ══
+applySettings();
+setTimeout(()=>applyMood('любопытство'), 800);
+setTimeout(()=>applyMood('спокойствие'), 3500);
+setTimeout(()=>applyMood('нейтраль'), 7000);
 </script>
 </body>
 </html>
