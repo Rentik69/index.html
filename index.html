@@ -413,6 +413,19 @@ function toggleSetting(key) {
   }
 }
 
+// Глобальный триггер первой пользовательской разблокировки медиасистем браузера
+window.addEventListener('click', () => {
+  if (!window.speechSynthesis) return;
+  // Снимаем блокировку тихим вызовом
+  const unlock = new SpeechSynthesisUtterance("");
+  unlock.volume = 0;
+  window.speechSynthesis.speak(unlock);
+  
+  if (cfg.auto && apiKey && !listening && !busy && !isSpeakingNow) {
+    startAutoListen();
+  }
+}, { once: true });
+
 function selectOpt(group, el) {
   document.querySelectorAll(`#${group}-opts .s-opt`).forEach(o => o.classList.remove('sel'));
   el.classList.add('sel');
@@ -487,8 +500,8 @@ let isSpeakingNow = false;
 
 function interruptSpeech() {
   if (isSpeakingNow && window.speechSynthesis) {
-    window.speechSynthesis.cancel();
     isSpeakingNow = false;
+    window.speechSynthesis.cancel();
     setStatus('Прервано');
     setTimeout(() => { if (cfg.auto && !busy && !listening) startAutoListen(); }, 400);
   }
@@ -505,39 +518,39 @@ function speakText(text) {
   }
 
   const clean = text.replace(/[*_~`#>]/g,'').substring(0, 450);
-  const utt = new SpeechSynthesisUtterance(clean);
-  utt.lang = 'ru-RU';
-  utt.rate = cfg.rate;
-  utt.pitch = cfg.pitch;
-  utt.volume = 1.0;
+  const streamUtt = new SpeechSynthesisUtterance(clean);
+  streamUtt.lang = 'ru-RU';
+  streamUtt.rate = cfg.rate;
+  streamUtt.pitch = cfg.pitch;
+  streamUtt.volume = 1.0;
 
   const voices = window.speechSynthesis.getVoices();
   const preferred = ['Google русский','Google Russian','Microsoft Pavel','Milena','Yandex'];
   let best = voices.find(v => preferred.some(p => v.name.includes(p)));
   if (!best) best = voices.find(v => v.lang.startsWith('ru'));
-  if (best) utt.voice = best;
+  if (best) streamUtt.voice = best;
 
-  utt.onstart = () => {
+  streamUtt.onstart = () => {
     isSpeakingNow = true;
     setStatus('🔊 Говорю...');
   };
   
-  utt.onend = () => {
+  streamUtt.onend = () => {
     if (isSpeakingNow) {
       isSpeakingNow = false;
       setStatus('');
       notifyResponse();
-      setTimeout(() => { if (cfg.auto && !busy && !listening) startAutoListen(); }, 600);
+      setTimeout(() => { if (cfg.auto && !busy && !listening) startAutoListen(); }, 500);
     }
   };
   
-  utt.onerror = () => {
+  streamUtt.onerror = () => {
     isSpeakingNow = false;
     setStatus('');
-    setTimeout(() => { if (cfg.auto && !busy && !listening) startAutoListen(); }, 600);
+    setTimeout(() => { if (cfg.auto && !busy && !listening) startAutoListen(); }, 500);
   };
   
-  window.speechSynthesis.speak(utt);
+  window.speechSynthesis.speak(streamUtt);
 }
 if (window.speechSynthesis) {
   window.speechSynthesis.onvoiceschanged = () => window.speechSynthesis.getVoices();
@@ -592,7 +605,13 @@ function initRec() {
   if (!SR) return null;
   
   if (window.recognitionInstance) {
-    try { window.recognitionInstance.onstart = null; window.recognitionInstance.onend = null; window.recognitionInstance.onerror = null; window.recognitionInstance.abort(); } catch(e) {}
+    try { 
+      window.recognitionInstance.onstart = null; 
+      window.recognitionInstance.onresult = null;
+      window.recognitionInstance.onend = null; 
+      window.recognitionInstance.onerror = null; 
+      window.recognitionInstance.abort(); 
+    } catch(e) {}
   }
 
   const r = new SR();
@@ -621,17 +640,14 @@ function initRec() {
   r.onerror = e => {
     listening = false;
     try { r.abort(); } catch(err){}
+    stopListening(false);
+    
     if (e.error==='not-allowed') {
       setStatus('⚠️ Разрешите микрофон в настройках');
       cfg.auto = false; saveCfg(); applySettings();
-      stopListening(true);
-    } else if (e.error==='no-speech') {
-      stopListening(false);
-      setTimeout(() => { if (cfg.auto && !busy && !isSpeakingNow && !listening) startAutoListen(); }, 400);
     } else {
-      setStatus('Ошибка: ' + e.error);
-      stopListening(true);
-      setTimeout(() => { if (cfg.auto && !busy && !isSpeakingNow && !listening) startAutoListen(); }, 800);
+      // Автоматический рестарт при тишине или сбоях связи
+      setTimeout(() => { if (cfg.auto && !busy && !isSpeakingNow && !listening) startAutoListen(); }, 400);
     }
   };
   
@@ -640,15 +656,17 @@ function initRec() {
       listening = false;
       try { r.abort(); } catch(err){}
       stopListening(false);
-      if (finalText.trim()) {
-        document.getElementById('txt').value = finalText.trim();
-        resize(document.getElementById('txt'));
-        setTimeout(() => bar.classList.remove('on'), 300);
-        send();
-      } else {
-        bar.classList.remove('on'); setStatus('');
-        setTimeout(() => { if (cfg.auto && !busy && !isSpeakingNow && !listening) startAutoListen(); }, 400);
-      }
+    }
+    
+    if (finalText.trim()) {
+      document.getElementById('txt').value = finalText.trim();
+      resize(document.getElementById('txt'));
+      if(bar) bar.classList.remove('on');
+      send();
+    } else {
+      if(bar) bar.classList.remove('on'); 
+      setStatus('');
+      setTimeout(() => { if (cfg.auto && !busy && !isSpeakingNow && !listening) startAutoListen(); }, 400);
     }
   };
   
@@ -657,15 +675,12 @@ function initRec() {
 }
 
 async function startAutoListen() {
-  if (listening || busy || isSpeakingNow) return;
-  try { await navigator.mediaDevices.getUserMedia({audio:true}); } catch(e) {
-    setStatus('⚠️ Нет доступа к микрофону'); return;
-  }
+  if (listening || busy || isSpeakingNow || !apiKey) return;
   rec = initRec();
   if (!rec) { setStatus('Микрофон не поддерживается'); return; }
   finalText = '';
   try { rec.start(); } catch(e) {
-    setStatus('Сбой запуска микрофона');
+    setTimeout(() => { if (cfg.auto && !busy && !isSpeakingNow && !listening) startAutoListen(); }, 500);
   }
 }
 
